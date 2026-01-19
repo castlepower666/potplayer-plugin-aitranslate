@@ -1,0 +1,1 @@
+# potplayer-plugin-aitranslate
