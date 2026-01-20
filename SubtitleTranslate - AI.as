@@ -62,11 +62,21 @@ string GetGenrePromptSuffix(string genre)
 {
 	if (genre == "anime")
 	{
-		return "\nSpecial Notes for Anime:\n"
+		return "\nSpecial Notes for Japanese Anime:\n"
 			+ "- Use appropriate Chinese terms for anime-specific concepts (e.g., 法师 for mage, 魔法 for magic)\n"
 			+ "- Maintain consistent naming for character titles and abilities\n"
-			+ "- Preserve Japanese honorifics appropriately translated\n"
-			+ "- Use natural expressions common in Chinese anime translations\n";
+			+ "- Preserve Japanese honorifics appropriately translated (如：-chan, -san, -sama)\n"
+			+ "- Use natural expressions common in Chinese anime translations\n"
+			+ "- Capture the emotional and dramatic style typical of Japanese animation\n";
+	}
+	else if (genre == "western-comic")
+	{
+		return "\nSpecial Notes for Western Comics/Animation:\n"
+			+ "- Use dynamic and straightforward English-origin terminology (e.g., Superhero超级英雄, Villain恶棍)\n"
+			+ "- Maintain consistency with Western pop culture references and expressions\n"
+			+ "- Preserve bold, direct, and action-oriented dialogue style\n"
+			+ "- Use energetic and impactful expressions common in Western animation\n"
+			+ "- Focus on humor, sarcasm, and witty remarks typical of Western storytelling\n";
 	}
 	else if (genre == "scifi")
 	{
@@ -187,7 +197,7 @@ string ServerLogin(string User, string Pass)
 		{
 			string genreInput = parts[3];
 			// 验证 genre 是否有效
-			if (genreInput == "anime" || genreInput == "scifi" || genreInput == "disney" || 
+			if (genreInput == "anime" || genreInput == "western-comic" || genreInput == "scifi" || genreInput == "disney" || 
 			    genreInput == "fantasy" || genreInput == "drama" || genreInput == "horror" || genreInput == "gamedev")
 			{
 				g_genre = genreInput;
@@ -397,7 +407,7 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	
 	// 加载内容类型配置
 	string savedGenre = HostLoadString("AI_Trans_Genre", "general");
-	if (savedGenre == "anime" || savedGenre == "scifi" || savedGenre == "disney" || 
+	if (savedGenre == "anime" || savedGenre == "western-comic" || savedGenre == "scifi" || savedGenre == "disney" || 
 	    savedGenre == "fantasy" || savedGenre == "drama" || savedGenre == "horror" || savedGenre == "gamedev")
 	{
 		g_genre = savedGenre;

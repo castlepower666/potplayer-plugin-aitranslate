@@ -7,7 +7,7 @@
 **核心特性**：
 - 🤖 支持多家AI大模型（OpenAI、DeepSeek、通义千问、Gemini等）
 - 📚 上下文感知翻译（保持对话连贯性）
-- 🎬 内容类型识别（7种内容类型特定翻译风格）
+- 🎬 内容类型识别（9种内容类型特定翻译风格）
 - 💾 完整翻译缓存（避免重复调用）
 - 🔄 自动场景检测（10秒无新字幕自动清空历史）
 - ⚙️ 灵活配置（可调整上下文条数0-20）
@@ -105,47 +105,52 @@ string g_baseUrl = "https://api.deepseek.com";  // 或其他API地址
 
 Genre 是一个可选参数，根据内容类型自动调整翻译风格。比如看动漫时用 `anime`，会使用动漫常用术语；看科幻时用 `scifi`，会使用科技专业术语。
 
-### 支持的7种内容类型
+### 支持的9种内容类型
 
-#### 1. **anime**（动漫）
-- **适用**：日本动画、日系作品
-- **特点**：动漫术语（法师、魔法），保持名称一致，恰当翻译日文敬语
+#### 1. **anime**（日本动漫）
+- **适用**：日本动画、日系漫画改编作品
+- **特点**：日系术语（法师、魔法），保持名称一致，恰当翻译日文敬语（-chan、-san、-sama），情感丰富的表达
 - **推荐**：`https://api.deepseek.com|deepseek-chat|5|anime`
 
-#### 2. **scifi**（科幻）
+#### 2. **western-comic**（欧美动画/漫画）⭐ NEW
+- **适用**：美国漫画、欧美动画、好莱坞风格内容
+- **特点**：西方术语（Superhero、Villain），流行文化风格，直接大气的对话，幽默讽刺
+- **推荐**：`https://api.deepseek.com|deepseek-chat|5|western-comic`
+
+#### 3. **scifi**（科幻）
 - **适用**：科幻电影、未来题材
 - **特点**：科技术语（粒子加速器、量子纠缠），专业表达，技术一致性
 - **推荐**：`https://api.deepseek.com|deepseek-chat|8|scifi`（建议用8条上下文）
 
-#### 3. **disney**（迪士尼）
+#### 4. **disney**（迪士尼）
 - **适用**：儿童电影、家庭内容
 - **特点**：温暖亲切（小姐姐、亲爱的），梦幻氛围，家庭友好
 - **推荐**：`https://api.deepseek.com|deepseek-chat|5|disney`
 
-#### 4. **fantasy**（奇幻）
+#### 5. **fantasy**（奇幻）
 - **适用**：魔幻剧集、冒险故事
 - **特点**：史诗感，奇幻术语（魔法、精灵、龙），宏大英勇
 - **推荐**：`https://api.deepseek.com|deepseek-chat|5|fantasy`
 
-#### 5. **drama**（剧情）
+#### 6. **drama**（剧情）
 - **适用**：电视剧、现代故事
 - **特点**：自然真实，感情丰富，日常表达，人物关系深度
 - **推荐**：`https://api.deepseek.com|deepseek-chat|3|drama`
 
-#### 6. **horror**（恐怖）
+#### 7. **horror**（恐怖）
 - **适用**：恐怖电影、惊悚内容
 - **特点**：诡异压抑，紧张气氛，黑暗表达，阴森感
 - **推荐**：`https://api.deepseek.com|deepseek-chat|5|horror`
 
-#### 7. **general**（通用，默认）
-- **适用**：不确定的内容
-- **特点**：平衡标准翻译，无特殊优化
-
-#### 8. **gamedev**（游戏开发教程）⭐ NEW
+#### 8. **gamedev**（游戏开发教程）
 - **适用**：Unity、Unreal Engine 等游戏开发教程
 - **特点**：游戏引擎术语精准（Component、Prefab、Blueprint等），编程概念准确，技术术语一致
 - **推荐**：`https://api.deepseek.com|deepseek-chat|5|gamedev`
 - **示例术语**：Shader（着色器）、Asset（资源）、Rigidbody（刚体）、Collider（碰撞器）、Material（材质）
+
+#### 9. **general**（通用，默认）
+- **适用**：不确定的内容
+- **特点**：平衡标准翻译，无特殊优化
 
 ### 翻译效果对比示例
 
@@ -153,12 +158,14 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。比�
 
 | Genre | 翻译结果 | 风格 |
 |-------|---------|------|
-| anime | 法师施展了强大的魔法来拯救局面。| 动漫术语 |
+| anime | 法师施展了强大的魔法来拯救局面。| 日漫术语 |
+| western-comic | 魔法师释放了强大的能量来挽救局面。| 欧美漫画风格 |
 | scifi | 魔法师释放了强大的能量脉冲来扭转局势。| 科技色彩 |
 | disney | 小仙女释放了美妙的魔力来拯救大家。| 温暖梦幻 |
 | fantasy | 大法师施放了一个强大的咒语来挽救局面。| 史诗感 |
 | drama | 那个法师施展魔法拯救了局面。| 自然真实 |
 | horror | 黑暗法师释放了可怕的诅咒魔法...| 诡异压抑 |
+| gamedev | （游戏开发教程术语）| 游戏术语 |
 | general | 法师施展了强大的法术来挽救局面。| 平衡标准 |
 
 **游戏开发教程例子**：You need to attach a Collider component to enable physics interactions.
