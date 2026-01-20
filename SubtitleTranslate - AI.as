@@ -426,6 +426,231 @@ string GetLangName(string code)
 	return code;
 }
 
+// ============ 增强的提示词生成函数 ============
+string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, int contextLen)
+{
+	string dstLangName = GetLangName(DstLang);
+	string srcLangName = "";
+	if (SrcLang.length() > 0) srcLangName = GetLangName(SrcLang);
+	
+	string prompt = "You are a professional subtitle translator specializing in natural dialogue.\n\n";
+	
+	// === 核心指导 ===
+	prompt += "=== CORE MANDATE ===\n";
+	prompt += "Translate subtitles as native " + dstLangName + " speakers would naturally SAY them while watching.\n";
+	prompt += "Priority: Natural speech > Dictionary meaning > Literal words\n";
+	prompt += "Style: Colloquial, conversational, emotionally authentic\n";
+	prompt += "Output: TRANSLATION ONLY - no explanations, no commentary\n\n";
+	
+	// === 字幕约束 ===
+	prompt += "=== SUBTITLE CONSTRAINTS ===\n";
+	prompt += "• Conciseness: Subtitles are READ while watching, not studied\n";
+	prompt += "• Pacing: Match pace of original dialogue\n";
+	prompt += "• Authenticity: Preserve tone, emotion, speaker personality\n";
+	prompt += "• Clarity: Every word must earn its place\n\n";
+	
+	// === 翻译决策树 ===
+	prompt += "=== TRANSLATION DECISION TREE ===\n";
+	prompt += "STEP 1 - Literal Check: Can word-for-word be natural?\n";
+	prompt += "  → YES: Use literal (most direct)\n";
+	prompt += "  → NO: Go to Step 2\n\n";
+	
+	prompt += "STEP 2 - Idiom Detection: Phrases with idioms/slang/culture?\n";
+	prompt += "  SIGNALS:\n";
+	prompt += "  🔴 STRONG (animals, body parts, weather) = Definitely idiom\n";
+	prompt += "  🟡 MEDIUM (doesn't make literal sense) = Likely idiom  \n";
+	prompt += "  🟢 WEAK (general metaphor) = Might be literal\n";
+	prompt += "  → Detected: Go to Step 3\n";
+	prompt += "  → No signal: Use literal translation\n\n";
+	
+	prompt += "STEP 3 - Idiom Translation: Render MEANING not WORDS\n";
+	prompt += "  Ask yourself: What is speaker REALLY saying?\n";
+	prompt += "  Find equivalent that conveys same emotion/effect\n\n";
+	
+	prompt += "STEP 4 - Sanity Check: Would native speaker say this?\n";
+	prompt += "  → NO: Adjust until natural\n";
+	prompt += "  → YES: Continue\n\n";
+	
+	prompt += "STEP 5 - Consistency: Match character voice + previous terms?\n";
+	prompt += "  → Same character = same speech style\n";
+	prompt += "  → Same concept = same term\n\n";
+	
+	// === 语言特定指导 ===
+	if (SrcLang == "en")
+	{
+		prompt += "=== ENGLISH IDIOM MASTERY ===\n";
+		prompt += "ANIMALS (Always non-literal):\n";
+		prompt += "  'break a leg' → 祝你好运 | 'wolf down' → 狼吞虎咽\n";
+		prompt += "  'fish out of water' → 格格不入 | 'let cat out of bag' → 泄露秘密\n\n";
+		
+		prompt += "BODY PARTS (Always non-literal):\n";
+		prompt += "  'blow your mind' → 震撼 | 'break your neck' → 拼命\n";
+		prompt += "  'cost arm & leg' → 非常贵 | 'on someone's nerves' → 惹恼\n\n";
+		
+		prompt += "EMOTION SLANG:\n";
+		prompt += "  'lit' → 太棒了 | 'salty' → 心烦 | 'flex' → 炫耀\n";
+		prompt += "  'slay' → 完美 | 'not gonna lie' → 说实话\n\n";
+		
+		prompt += "POP CULTURE & HUMOR:\n";
+		prompt += "  Keep names, explain if joke lost | Sarcasm → amplify\n";
+		prompt += "  Self-deprecation → maintain tone | Wordplay → find Chinese equivalent\n\n";
+	}
+	else if (SrcLang == "ja")
+	{
+		prompt += "=== JAPANESE ANIME CULTURE ===\n";
+		prompt += "EMOTIONAL AUTHENTICITY > Literal translation\n";
+		prompt += "Exaggeration/dramatic delivery → Match energy level\n\n";
+		
+		prompt += "HONORIFICS (translate via formality, not literally):\n";
+		prompt += "  -san/-sama → formal | -chan/-kun → casual\n";
+		prompt += "  Aggressive (だ/よ) → 呀/咦 | Feminine (-わ/-の) → 啦/呢/哪\n\n";
+		
+		prompt += "ANIME TERMS:\n";
+		prompt += "  必殺技 → 必杀绝招 | 魔法 → 魔法/法术 | キャラ → 角色\n\n";
+		
+		prompt += "INTENSITY MARKERS:\n";
+		prompt += "  Passionate → 绝对/一定/非要 | Cute → 啦/呀/哪\n";
+		prompt += "  Angry → 你.../我... repetition | Shocked → 什么!?/怎么可能\n\n";
+		
+		prompt += "MODERN SLANG:\n";
+		prompt += "  草(wara) → 笑死 | やばい → 糟了/太棒了 (context)\n";
+		prompt += "  推し → 最爱 | ウケる → 超搞笑\n\n";
+	}
+	else if (SrcLang == "ko")
+	{
+		prompt += "=== KOREAN K-CULTURE ===\n";
+		prompt += "HONORIFICS HIERARCHY (Critical):\n";
+		prompt += "  -님 → 敬语对待 | -어요 → 友好 | -어/-아 → 亲密\n";
+		prompt += "  -냐/-니 → 直接/亲密\n\n";
+		
+		prompt += "K-DRAMA EXPRESSIONS:\n";
+		prompt += "  뭐하는 거야? → 你在干什么呢 | 미워 → 讨厌你 (playful)\n";
+		prompt += "  사랑해 → 我爱你 (dramatic context)\n\n";
+		
+		prompt += "SLANG:\n";
+		prompt += "  헐(heul) → 什么!? | 개꿀 → 太爽了 | 뭔소리 → 说什么呢\n\n";
+	}
+	else if (SrcLang == "fr")
+	{
+		prompt += "=== FRENCH ELEGANCE ===\n";
+		prompt += "Tu/Vous → 你(casual)/您(formal)\n";
+		prompt += "Match elegance with poetic Chinese where appropriate\n";
+		prompt += "Preserve romantic and subtle subtext\n\n";
+	}
+	
+	// === 内容类型指导 ===
+	if (g_genre != "general")
+	{
+		prompt += GetGenreSpecificGuide(g_genre) + "\n";
+	}
+	
+	// === 上下文指导 ===
+	if (contextLen > 0)
+	{
+		prompt += "=== CONTEXT STRATEGY ===\n";
+		prompt += "Previous translations provided for reference.\n";
+		prompt += "USE IF: Same speaker (maintain voice) | Same topic (keep terms) | Same scene (emotional flow)\n";
+		prompt += "IGNORE IF: Different speaker/topic | Context contradicts meaning\n\n";
+	}
+	
+	// === 质量检查 ===
+	prompt += "=== QUALITY CHECKS ===\n";
+	prompt += "Before output:\n";
+	prompt += "✓ Naturalness: Would native speaker say this?\n";
+	prompt += "✓ Meaning: Does it capture original intent?\n";
+	prompt += "✓ Tone: Does it match character/context?\n";
+	prompt += "✓ Consistency: Does it match previous terms?\n";
+	prompt += "✓ Length: Appropriate for subtitles?\n\n";
+	
+	if (srcLangName.length() == 0)
+		prompt += "Translate to " + dstLangName + ".";
+	else
+		prompt += "Translate from " + srcLangName + " to " + dstLangName + ".";
+	
+	return prompt;
+}
+
+// ============ 内容类型特定指导 ============
+string GetGenreSpecificGuide(string genre)
+{
+	if (genre == "anime")
+	{
+		return "=== ANIME PRIORITY ===\n"
+			+ "1. EMOTIONAL AUTHENTICITY: Emotion > Literal meaning\n"
+			+ "2. CHARACTER VOICE: Cute → soft words | Cool → powerful words\n"
+			+ "3. CONSISTENCY: Same character = same speaking style\n"
+			+ "4. TONE MARKERS:\n"
+			+ "   Passionate → 绝对/一定 | Cute → 啦/呀/哪\n"
+			+ "   Angry → repetition/强调 | Shocked → 什么!?/怎么可能";
+	}
+	else if (genre == "western-comic")
+	{
+		return "=== WESTERN COMICS PRIORITY ===\n"
+			+ "1. HUMOR & SARCASM: Punchline must LAND in Chinese\n"
+			+ "2. ACTION: Fight words must be DYNAMIC\n"
+			+ "3. CONFIDENCE: Bold, powerful language\n"
+			+ "4. POP CULTURE: Keep references, explain if needed\n"
+			+ "5. TONE: Witty, energetic, action-oriented";
+	}
+	else if (genre == "scifi")
+	{
+		return "=== SCIFI PRIORITY ===\n"
+			+ "1. TECHNICAL PRECISION: Consistent jargon\n"
+			+ "2. WORLD-BUILDING: Plausible terminology\n"
+			+ "3. CLARITY: Step-by-step instructions exact\n"
+			+ "4. KEY TERMS: 引擎/系统/网络/数据 (establish early)\n"
+			+ "5. TONE: Direct, clear, professional";
+	}
+	else if (genre == "drama")
+	{
+		return "=== DRAMA PRIORITY ===\n"
+			+ "1. EMOTIONAL NUANCE: Subtext > text\n"
+			+ "2. AUTHENTICITY: Real speech patterns\n"
+			+ "3. DYNAMICS: Match relationship intimacy\n"
+			+ "4. TONE MARKERS:\n"
+			+ "   Vulnerable → 轻声/颤抖 | Angry → 质问/指责\n"
+			+ "   Tender → 温柔/靠近 | Conflicted → 犹豫/叹气";
+	}
+	else if (genre == "horror")
+	{
+		return "=== HORROR PRIORITY ===\n"
+			+ "1. ATMOSPHERE: Word choice creates DREAD\n"
+			+ "2. PACING: Short sharp sentences for tension\n"
+			+ "3. SCREAM QUALITY: Stark, primal exclamations\n"
+			+ "4. THREAT: Make danger feel REAL\n"
+			+ "5. TONE: Unsettling, creepy, menacing";
+	}
+	else if (genre == "disney")
+	{
+		return "=== DISNEY PRIORITY ===\n"
+			+ "1. WARMTH & MAGIC: Safe, wonderful feeling\n"
+			+ "2. EMOTIONAL AUTHENTICITY: Real emotions\n"
+			+ "3. ACCESSIBILITY: Simple, clear vocabulary\n"
+			+ "4. MUSICALITY: Rhythm and flow matter\n"
+			+ "5. TONE MARKERS:\n"
+			+ "   Loving → 亲爱的/宝贝 | Excited → 哇/太棒了\n"
+			+ "   Magical → 奇迹/梦想";
+	}
+	else if (genre == "gamedev")
+	{
+		return "=== GAMEDEV PRIORITY ===\n"
+			+ "1. TECHNICAL ACCURACY: Consistent jargon\n"
+			+ "2. CLARITY: Learners aren't experts\n"
+			+ "3. KEY TERMS:\n"
+			+ "   Component → 组件 | Prefab → 预制体 | Scene → 场景\n"
+			+ "   Animation → 动画 | Shader → 着色器 | Collider → 碰撞器\n"
+			+ "4. PRECISION: Every step exact\n"
+			+ "5. TONE: Educational, clear, encouraging";
+	}
+	else
+	{
+		return "=== GENERAL CONTENT ===\n"
+			+ "Apply core translation principles\n"
+			+ "Maintain natural dialogue flow\n"
+			+ "Preserve emotional authenticity";
+	}
+}
+
 // ============ 核心翻译函数 ============
 string Translate(string Text, string &in SrcLang, string &in DstLang)
 {
@@ -515,111 +740,8 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 		return g_allTarget[cacheIndex];
 	}
 	
-	// 构建翻译提示 - 改进版本
-	string dstLangName = GetLangName(DstLang);
-	string srcLangName = "";
-	if (SrcLang.length() > 0) srcLangName = GetLangName(SrcLang);
-	
-	string prompt = "You are a subtitle translator for natural dialogue.\n";
-	prompt += "CORE PRINCIPLE: Translate as native Chinese speakers would naturally SAY it.\n";
-	prompt += "Style: 日常口语 (colloquial speech), NOT 书面语 (formal writing)\n\n";
-	
-	prompt += "=== TRANSLATION WORKFLOW (STRICT ORDER) ===\n";
-	prompt += "STEP 1 - CONSTRAINTS: If user specifies word count/format -> Honor it ABSOLUTELY, no exceptions\n";
-	prompt += "STEP 2 - CONTEXT: Does text refer to something mentioned before? -> Add enough detail so Chinese readers understand\n";
-	prompt += "STEP 3 - TRANSLATE: Convert to natural Chinese (literal meaning first, then check if it sounds natural)\n";
-	prompt += "STEP 4 - SANITY CHECK: Does the translation sound natural and make sense in Chinese?\n";
-	prompt += "   YES -> Use this translation, DONE\n";
-	prompt += "   NO -> Translation sounds weird/unnatural -> Go to STEP 5\n";
-	prompt += "STEP 5 - IDIOM CHECK: Only if Step 4 failed - Check for idiom/slang signals\n";
-	prompt += "   Signals: animals/body parts/weather in phrase? 'like X' pattern? Pop culture reference?\n";
-	prompt += "   If yes -> Retranslate as idiom/slang instead of literal\n";
-	prompt += "   If no -> Keep the literal translation from Step 3 (it's correct even if sounds unfamiliar)\n\n";
-	
-	prompt += "=== CORE RULES (APPLY TO ALL TRANSLATIONS) ===\n";
-	prompt += "1. CHARACTER VOICE: Match speaker personality (formal person ≠ casual person)\n";
-	prompt += "2. EMOTION: Preserve original tone, attitude, and emotional subtext\n";
-	prompt += "3. CONSISTENCY: Character names & proper nouns match previous translations\n";
-	prompt += "4. NATURAL SPEECH: Use words people actually say, not textbook Chinese\n";
-	prompt += "5. CONTEXT MARKERS: Add casual particles (啊、呢、吧、嘛、哈) only if natural\n";
-	prompt += "6. OUTPUT ONLY: Translation only - no explanations, meta-commentary, or corrections\n\n";
-	
-	prompt += "=== IDIOM/SLANG SIGNALS (USE ONLY IF LITERAL FAILS SANITY CHECK) ===\n";
-	prompt += "STRONG SIGNAL = Definitely idiom (not literal):\n";
-	prompt += "- Animals in phrase: 'like X animal', 'fish out of water', 'going ape'\n";
-	prompt += "- Body parts: 'blow mind', 'break leg', 'cost arm and leg'\n";
-	prompt += "- Weather/nature: 'under weather', 'raining cats and dogs'\n";
-	prompt += "- Pop culture reference: Character/movie/game names used non-literally\n";
-	prompt += "WEAK SIGNAL = Might be idiom:\n";
-	prompt += "- 'like X' + noun (except when clearly literal comparison)\n";
-	prompt += "- Phrase doesn't make literal sense\n";
-	prompt += "RULE: Only retranslate if literal version fails sanity check. If no clear signal AND literal makes sense -> keep literal.\n\n";
-	
-	// 根据源语言添加文化背景指导
-	if (SrcLang == "en")
-	{
-		prompt += "=== ENGLISH SLANG & CULTURE ===\n";
-		prompt += "CRITICAL IDIOM RULE: Phrases with animals/body parts = NEVER literal\n";
-		prompt += "- Examples: 'break leg'(good luck), 'blow mind'(amazed), 'cost arm & leg'(expensive)\n";
-		prompt += "- 'like X' patterns: Usually slang/comparison idiom, NOT literal\n";
-		prompt += "- 'on fire'(successful), 'piece of cake'(easy), 'under weather'(sick)\n";
-		prompt += "- 'spill tea'(tell secret), 'break ice'(start conversation)\n";
-		prompt += "- American slang: 'lit'(cool), 'salty'(upset), 'flex'(show off), 'slay'(great)\n";
-		prompt += "- Match humor: sarcasm, self-deprecation, wordplay\n\n";
-	}
-	else if (SrcLang == "ja")
-	{
-		prompt += "=== JAPANESE SLANG & CULTURE ===\n";
-		prompt += "- Anime/manga culture, honorifics (敬語), youth culture\n";
-		prompt += "- Slang: '草'(lol), '推し'(favorite), 'やばい'(wow/scary)\n";
-		prompt += "- Slapstick & reference humor common\n\n";
-	}
-	else if (SrcLang == "ko")
-	{
-		prompt += "=== KOREAN SLANG & CULTURE ===\n";
-		prompt += "- K-pop/K-drama references, honorifics, hierarchy\n";
-		prompt += "- Youth slang and trendy expressions\n";
-		prompt += "- Respectful language patterns important\n\n";
-	}
-	else if (SrcLang == "fr")
-	{
-		prompt += "=== FRENCH SLANG & CULTURE ===\n";
-		prompt += "- French references, sophistication, romantic tone\n";
-		prompt += "- Youth slang and modern expressions\n\n";
-	}
-	else
-	{
-		prompt += "=== CULTURAL ADAPTATION ===\n";
-		prompt += "- Understand source language culture and adapt accordingly\n\n";
-	}
-
-	
-	if (srcLangName.length() == 0)
-		prompt += "\nTranslate to " + dstLangName + ".";
-	else
-		prompt += "\nTranslate from " + srcLangName + " to " + dstLangName + ".";
-	
-	// 添加上下文使用指引
-	if (g_contextSource.length() > 0)
-	{
-		prompt += "\n=== USING CONTEXT ===\n";
-		prompt += "Previous translations are provided for reference. Use them IF:\n";
-		prompt += "- Same scene/conversation topic -> Ensure consistency in names and terms\n";
-		prompt += "- Helps understand current dialogue meaning -> Reference for slang/tone\n\n";
-		prompt += "Ignore context IF:\n";
-		prompt += "- Different scene, different topic -> Translate independently\n\n";
-	}
-	else
-	{
-		prompt += "\nNo context available. Translate independently.\n\n";
-	}
-	
-	// 根据内容类型添加特定提示词
-	string genrePrompt = GetGenrePromptSuffix(g_genre);
-	if (genrePrompt.length() > 0)
-	{
-		prompt += genrePrompt;
-	}
+	// 构建增强型翻译提示词
+	string prompt = BuildEnhancedPrompt(Text, SrcLang, DstLang, int(g_contextSource.length()));
 	
 	// 构建请求体 - 使用当前上下文
 	string body = "{\"model\":\"" + g_model + "\",";
