@@ -38,7 +38,16 @@ string GetLoginTitle()
 
 string GetLoginDesc()
 {
-	return "{$CP936=格式: API地址|模型名称|上下文条数(可选,默认5)|内容类型(可选) 和 API Key}Format: URL|Model|ContextCount(optional,default 5)|Genre(optional) and API Key";
+	return "{$CP936=配置格式: URL|Model|Context|Genre\n"
+		+ "示例: https://api.deepseek.com|deepseek-chat|5|anime\n\n"
+		+ "Genre选项: anime(日漫) western-comic(美漫) scifi fantasy drama horror disney gamedev general\n"
+		+ "Context: 0(无上下文,快速) 3-5(推荐) 10+(强一致性)\n"
+		+ "默认: Model=deepseek-chat, Context=5, Genre=general"
+		+ "}Format: URL|Model|Context|Genre\n"
+		+ "Example: https://api.deepseek.com|deepseek-chat|5|anime\n\n"
+		+ "Genre: anime western-comic scifi fantasy drama horror disney gamedev general\n"
+		+ "Context: 0(fastest) 3-5(recommended) 10+(strong consistency)\n"
+		+ "Default: deepseek-chat, 5, general";
 }
 
 string GetUserText()
@@ -147,84 +156,105 @@ const uint SCENE_CHANGE_THRESHOLD = 6000;  // 6秒无新字幕，判断为场景
 
 string ServerLogin(string User, string Pass)
 {
-	// User = API URL|Model|ContextCount, Pass = API Key
+	// User = API URL|Model|ContextCount|Genre, Pass = API Key
 	g_apiKey = Pass;
 	
-	// 解析 URL|Model|ContextCount 格式
-	if (User.length() > 0)
+	// ===== 验证必不可少的参数 =====
+	// 必须有API Key
+	if (Pass.length() == 0)
 	{
-		// 分割字符串
-		array<string> parts = User.split("|");
-		
-		if (parts.length() >= 1)
-		{
-			g_baseUrl = parts[0];
-		}
-		
-		if (parts.length() >= 2 && parts[1].length() > 0)
-		{
-			g_model = parts[1];
-		}
-		else
-		{
-			// 根据URL自动选择默认模型
-			if (g_baseUrl.findFirst("deepseek") >= 0)
-				g_model = "deepseek-chat";
-			else if (g_baseUrl.findFirst("openai") >= 0)
-				g_model = "gpt-3.5-turbo";
-			else if (g_baseUrl.findFirst("dashscope") >= 0 || g_baseUrl.findFirst("aliyun") >= 0)
-				g_model = "qwen-turbo";
-			else if (g_baseUrl.findFirst("googleapis") >= 0 || g_baseUrl.findFirst("gemini") >= 0)
-				g_model = "gemini-pro";
-			else
-				g_model = "gpt-3.5-turbo";
-		}
-		
-		if (parts.length() >= 3 && parts[2].length() > 0)
-		{
-			int count = parseInt(parts[2]);
-			if (count >= 0 && count <= 20)  // 限制范围 0-20
-				g_maxHistory = count;
-			else
-				g_maxHistory = 5;  // 无效值使用默认
-		}
-		else
-		{
-			g_maxHistory = 5;  // 默认5条
-		}
-		
-		if (parts.length() >= 4 && parts[3].length() > 0)
-		{
-			string genreInput = parts[3];
-			// 验证 genre 是否有效
-			if (genreInput == "anime" || genreInput == "western-comic" || genreInput == "scifi" || genreInput == "disney" || 
-			    genreInput == "fantasy" || genreInput == "drama" || genreInput == "horror" || genreInput == "gamedev")
-			{
-				g_genre = genreInput;
-			}
-			else
-			{
-				g_genre = "general";  // 无效genre使用默认
-			}
-		}
-		else
-		{
-			g_genre = "general";  // 默认为 general
-		}
-
-		
-		// 去除末尾斜杠
-		if (g_baseUrl.Right(1) == "/") g_baseUrl = g_baseUrl.Left(g_baseUrl.length() - 1);
+		return "fail|{$CP936=错误: API Key不能为空}Error: API Key is required";
 	}
 	
+	// 必须有URL
+	if (User.length() == 0)
+	{
+		return "fail|{$CP936=错误: URL不能为空}Error: URL is required";
+	}
+	
+	// 分割字符串
+	array<string> parts = User.split("|");
+	
+	// 验证URL
+	if (parts.length() < 1 || parts[0].length() == 0)
+	{
+		return "fail|{$CP936=错误: URL不能为空}Error: URL is required";
+	}
+	g_baseUrl = parts[0];
+	
+	// ===== 可选参数，有错才提示 =====
+	
+	// 解析Model（可选，有自动检测）
+	if (parts.length() >= 2 && parts[1].length() > 0)
+	{
+		g_model = parts[1];
+	}
+	else
+	{
+		// 根据URL自动选择默认模型
+		if (g_baseUrl.findFirst("deepseek") >= 0)
+			g_model = "deepseek-chat";
+		else if (g_baseUrl.findFirst("openai") >= 0)
+			g_model = "gpt-3.5-turbo";
+		else if (g_baseUrl.findFirst("dashscope") >= 0 || g_baseUrl.findFirst("aliyun") >= 0)
+			g_model = "qwen-turbo";
+		else if (g_baseUrl.findFirst("googleapis") >= 0 || g_baseUrl.findFirst("gemini") >= 0)
+			g_model = "gemini-pro";
+		else
+			g_model = "gpt-3.5-turbo";
+	}
+	
+	// 解析ContextCount（可选，有值时才验证）
+	g_maxHistory = 5;  // 默认5条
+	if (parts.length() >= 3 && parts[2].length() > 0)
+	{
+		int count = parseInt(parts[2]);
+		if (count >= 0 && count <= 20)  // 限制范围 0-20
+			g_maxHistory = count;
+		else
+		{
+			// 用户明确输入了无效值，才提示
+			return "fail|{$CP936=错误: Context必须是0-20之间的数字}Error: Context must be 0-20";
+		}
+	}
+	
+	// 解析Genre（可选，有值时才验证）
+	g_genre = "general";  // 默认为 general
+	if (parts.length() >= 4 && parts[3].length() > 0)
+	{
+		string genreInput = parts[3];
+		// 验证 genre 是否有效
+		if (genreInput == "anime" || genreInput == "western-comic" || genreInput == "scifi" || 
+		    genreInput == "disney" || genreInput == "fantasy" || genreInput == "drama" || 
+		    genreInput == "horror" || genreInput == "gamedev" || genreInput == "general")
+		{
+			g_genre = genreInput;
+		}
+		else
+		{
+			// 用户明确输入了无效值，才提示
+			return "fail|{$CP936=错误: Genre无效. 有效值: anime|western-comic|scifi|disney|fantasy|drama|horror|gamedev|general}Error: Invalid Genre";
+		}
+	}
+	
+	// 去除末尾斜杠
+	if (g_baseUrl.Right(1) == "/") g_baseUrl = g_baseUrl.Left(g_baseUrl.length() - 1);
+	
+	// 保存配置
 	HostSaveString("AI_Trans_Key", g_apiKey);
 	HostSaveString("AI_Trans_Url", g_baseUrl);
 	HostSaveString("AI_Trans_Model", g_model);
 	HostSaveString("AI_Trans_History", "" + g_maxHistory);
 	HostSaveString("AI_Trans_Genre", g_genre);
 	
-	if (g_apiKey.length() == 0) return "fail";
-	return "200 ok";
+	// 打印调试信息到控制台
+	HostPrintUTF8("=== AI Translator Config Loaded ===\n");
+	HostPrintUTF8("URL: " + g_baseUrl + "\n");
+	HostPrintUTF8("Model: " + g_model + "\n");
+	HostPrintUTF8("Context: " + g_maxHistory + "\n");
+	HostPrintUTF8("Genre: " + g_genre + "\n");
+	
+	return "200 ok|{$CP936=配置成功! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + "}OK! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre;
 }
 
 void ServerLogout()
@@ -466,18 +496,34 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	string srcLangName = "";
 	if (SrcLang.length() > 0) srcLangName = GetLangName(SrcLang);
 	
-	string prompt = "You are a professional subtitle translator. ";
+	string prompt = "You are a professional subtitle translator with strong attention to quality.\n";
 	prompt += "Translation rules:\n";
 	prompt += "1. Translate naturally and fluently, maintaining the original tone and style.\n";
-	prompt += "2. Keep character names, proper nouns, and technical terms consistent with previous translations.\n";
+	prompt += "2. Keep character names, proper nouns, and technical terms CONSISTENT with previous translations in context.\n";
 	prompt += "3. Preserve the original meaning, emotion, and nuance.\n";
-	prompt += "4. Output ONLY the translation, no explanations or notes.\n";
+	prompt += "4. Check your translation for obvious errors before returning (grammar, logic, consistency, typos).\n";
 	prompt += "5. If the text contains sounds or onomatopoeia, translate them appropriately.\n";
+	prompt += "6. Output ONLY the final corrected translation, no explanations or notes.\n";
 	
 	if (srcLangName.length() == 0)
 		prompt += "\nTranslate to " + dstLangName + ".";
 	else
 		prompt += "\nTranslate from " + srcLangName + " to " + dstLangName + ".";
+	
+	// 添加上下文使用指引
+	if (g_contextSource.length() > 0)
+	{
+		prompt += "\n\nIMPORTANT: Previous translations are provided as context for consistency.\n";
+		prompt += "Use them to ensure:\n";
+		prompt += "- Character names are translated consistently\n";
+		prompt += "- Terminology matches previous choices\n";
+		prompt += "- Tone and style are maintained\n";
+		prompt += "- Technical/specialized terms are used consistently\n";
+	}
+	else
+	{
+		prompt += "\n\nNo previous context available. Translate independently and ensure quality.\n";
+	}
 	
 	// 根据内容类型添加特定提示词
 	string genrePrompt = GetGenrePromptSuffix(g_genre);
