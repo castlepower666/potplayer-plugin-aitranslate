@@ -143,7 +143,7 @@ int g_lastIndex = -1;  // 上次访问的缓存索引，用于检测快进/后�
 array<string> g_contextSource;  // 当前连续上下文原文
 array<string> g_contextTarget;  // 当前连续上下文译文
 uint g_lastTranslateTime = 0;  // 上次翻译时间，用于检测场景切换
-const uint SCENE_CHANGE_THRESHOLD = 10000;  // 10秒无新字幕，判断为场景切换
+const uint SCENE_CHANGE_THRESHOLD = 6000;  // 6秒无新字幕，判断为场景切换
 
 string ServerLogin(string User, string Pass)
 {
