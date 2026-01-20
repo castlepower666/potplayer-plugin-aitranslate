@@ -38,18 +38,18 @@ string GetLoginTitle()
 
 string GetLoginDesc()
 {
-	return "{$CP936=配置格式: URL|Model|Context|Genre\n"
-		+ "示例: https://api.deepseek.com|deepseek-chat|5|anime\n\n"
-		+ "Genre选项: anime(日漫) western-comic(美漫) scifi fantasy drama horror disney gamedev general\n"
-		+ "Context: 0(无上下文,快速) 3-5(推荐) 10+(强一致性)\n"
-		+ "默认: Model=deepseek-chat, Context=5, Genre=general"
-		+ "}Format: URL|Model|Context|Genre\n"
-		+ "Example: https://api.deepseek.com|deepseek-chat|5|anime\n\n"
-		+ "Genre: anime western-comic scifi fantasy drama horror disney gamedev general\n"
-		+ "Context: 0(fastest) 3-5(recommended) 10+(strong consistency)\n"
-		+ "Default: deepseek-chat, 5, general";
-}
-
+		return "{$CP936=配置格式: URL|Model|Context|Genre|SceneThreshold\n"
+			+ "示例: https://api.deepseek.com|deepseek-chat|5|anime|6000\n\n"
+			+ "Genre选项: anime(日漫) western-comic(美漫) scifi fantasy drama horror disney gamedev general\n"
+			+ "Context: 0(无上下文) 3-5(推荐) 10+(强一致性)\n"
+			+ "SceneThreshold: 场景变更阈值(毫秒, 默认6000)\n"
+			+ "默认: Model=deepseek-chat, Context=5, Genre=general, SceneThreshold=6000"
+			+ "}Format: URL|Model|Context|Genre|SceneThreshold\n"
+			+ "Example: https://api.deepseek.com|deepseek-chat|5|anime|6000\n\n"
+			+ "Genre: anime western-comic scifi fantasy drama horror disney gamedev general\n"
+			+ "Context: 0(no context) 3-5(recommended) 10+(strong consistency)\n"
+			+ "SceneThreshold: Scene change threshold in milliseconds (default: 6000)\n"
+			+ "Default: deepseek-chat, 5, general, 6000";}
 string GetUserText()
 {
 	return "{$CP936=API地址|模型|上下文:}URL|Model|Context:";
@@ -65,6 +65,7 @@ string g_apiKey = "";
 string g_baseUrl = "";
 string g_model = "deepseek-chat";
 string g_genre = "general";
+uint g_sceneChangeThreshold = 6000;  // 毫秒，场景切换阈值
 
 // ============ 内容类型相关函数 ============
 string GetGenrePromptSuffix(string genre)
@@ -140,7 +141,7 @@ string GetGenrePromptSuffix(string genre)
 	return "";  // general 类型不添加额外提示
 }
 
-  // 内容类型：anime, scifi, disney, fantasy, drama, horror, gamedev, general
+// 内容类型：anime, scifi, disney, fantasy, drama, horror, gamedev, general
 string UserAgent = "PotPlayer/1.0";
 
 // ============ 上下文历史记录 ============
@@ -152,7 +153,6 @@ int g_lastIndex = -1;  // 上次访问的缓存索引，用于检测快进/后�
 array<string> g_contextSource;  // 当前连续上下文原文
 array<string> g_contextTarget;  // 当前连续上下文译文
 uint g_lastTranslateTime = 0;  // 上次翻译时间，用于检测场景切换
-const uint SCENE_CHANGE_THRESHOLD = 6000;  // 6秒无新字幕，判断为场景切换
 
 string ServerLogin(string User, string Pass)
 {
@@ -237,6 +237,20 @@ string ServerLogin(string User, string Pass)
 		}
 	}
 	
+	// 解析SceneThreshold（可选，有值时才验证）
+	g_sceneChangeThreshold = 6000;  // 默认6000毫秒
+	if (parts.length() >= 5 && parts[4].length() > 0)
+	{
+		int threshold = parseInt(parts[4]);
+		if (threshold > 0 && threshold <= 60000)  // 允许1毫秒到60秒
+			g_sceneChangeThreshold = uint(threshold);
+		else
+		{
+			// 用户明确输入了无效值，才提示
+			return "fail|{$CP936=错误: SceneThreshold必须是1-60000毫秒之间的数字}Error: SceneThreshold must be 1-60000 milliseconds";
+		}
+	}
+	
 	// 去除末尾斜杠
 	if (g_baseUrl.Right(1) == "/") g_baseUrl = g_baseUrl.Left(g_baseUrl.length() - 1);
 	
@@ -246,6 +260,7 @@ string ServerLogin(string User, string Pass)
 	HostSaveString("AI_Trans_Model", g_model);
 	HostSaveString("AI_Trans_History", "" + g_maxHistory);
 	HostSaveString("AI_Trans_Genre", g_genre);
+	HostSaveString("AI_Trans_SceneThreshold", "" + g_sceneChangeThreshold);
 	
 	// 打印调试信息到控制台
 	HostPrintUTF8("=== AI Translator Config Loaded ===\n");
@@ -253,8 +268,9 @@ string ServerLogin(string User, string Pass)
 	HostPrintUTF8("Model: " + g_model + "\n");
 	HostPrintUTF8("Context: " + g_maxHistory + "\n");
 	HostPrintUTF8("Genre: " + g_genre + "\n");
+	HostPrintUTF8("SceneThreshold: " + g_sceneChangeThreshold + "ms\n");
 	
-	return "200 ok|{$CP936=配置成功! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + "}OK! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre;
+	return "200 ok|{$CP936=配置成功! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms}OK! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms";
 }
 
 void ServerLogout()
@@ -447,16 +463,24 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 		g_genre = "general";
 	}
 	
+	// 加载场景变更阈值配置
+	string savedThreshold = HostLoadString("AI_Trans_SceneThreshold", "6000");
+	int thresholdVal = parseInt(savedThreshold);
+	if (thresholdVal > 0 && thresholdVal <= 60000)
+		g_sceneChangeThreshold = uint(thresholdVal);
+	else
+		g_sceneChangeThreshold = 6000;
+	
 	// 检查配置
 	if (g_apiKey.length() == 0) return "";
 	if (Text.Trim().length() == 0) return "";
 	
-	// 检测是否有场景切换（30秒无新字幕）
+	// 检测是否有场景切换
 	uint currentTime = HostGetTickCount();
 	if (g_lastTranslateTime > 0)
 	{
 		uint timeDiff = currentTime - g_lastTranslateTime;
-		if (timeDiff > SCENE_CHANGE_THRESHOLD)
+		if (timeDiff > g_sceneChangeThreshold)
 		{
 			// 场景切换，清空过时的上下文
 			ClearContext();
@@ -496,7 +520,17 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	string srcLangName = "";
 	if (SrcLang.length() > 0) srcLangName = GetLangName(SrcLang);
 	
-	string prompt = "You are a professional subtitle translator with strong attention to quality.\n";
+	string prompt = "You are a professional subtitle translator for colloquial speech and dialogue (e.g., movies, TV shows, anime).\n";
+	prompt += "PRIMARY GOAL: Translate dialogue naturally and conversationally - as if native Chinese speakers would actually SAY it.\n\n";
+	prompt += "COLLOQUIAL TRANSLATION PRINCIPLES:\n";
+	prompt += "- Use natural, everyday Chinese expressions (日常口语)\n";
+	prompt += "- Avoid overly formal or literary language (文言文/书面语)\n";
+	prompt += "- Reflect how real people speak: incomplete sentences, interruptions, contractions, informal phrasing\n";
+	prompt += "- Prioritize natural flow over grammatical perfection\n";
+	prompt += "- Match the character's personality and speech patterns in the translation\n";
+	prompt += "- Keep the tone, attitude, and emotion of the original speaker\n";
+	prompt += "- Use colloquial particles and conversational markers (啊、呢、吧、嘛等)\n";
+	prompt += "- Slang, idioms, and informal expressions ARE PART OF natural speech - handle them appropriately\n\n";
 	prompt += "Translation rules:\n";
 	prompt += "1. Translate naturally and fluently, maintaining the original tone and style.\n";
 	prompt += "2. Keep character names, proper nouns, and technical terms CONSISTENT with previous translations in context.\n";
@@ -505,20 +539,131 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	prompt += "5. If the text contains sounds or onomatopoeia, translate them appropriately.\n";
 	prompt += "6. Output ONLY the final corrected translation, no explanations or notes.\n";
 	
+	// 根据源语言添加文化背景指导
+	if (SrcLang == "en")
+	{
+		prompt += "\nCULTURAL & SLANG CONTEXT (English Source):\n";
+		prompt += "This is English-language content. Focus on:\n";
+		prompt += "- AMERICAN ENGLISH slang: 'lit' (cool), 'salty' (upset), 'flex' (show off), 'vibe' (feeling)\n";
+		prompt += "- BRITISH ENGLISH slang: 'brilliant' (great), 'mate' (friend), 'cheeky' (playful)\n";
+		prompt += "- INTERNET/MODERN slang: 'slay' (do great), 'no cap' (no lie), 'lowkey' (subtly)\n";
+		prompt += "- Cultural references to American/British culture, Hollywood, pop music\n";
+		prompt += "- Humor styles: sarcasm, self-deprecation, wordplay\n";
+		prompt += "- Find Chinese translations that match the attitude and cultural context\n\n";
+		prompt += "CRITICAL: English Phrasal & Idiom Translation Guide:\n";
+		prompt += "These specific English expressions have FIXED meanings, NOT literal translations:\n";
+		prompt += "- 'It is on' -> '准备开始/要来了/有戏了'\n";
+		prompt += "- 'Bring it on' -> '来吧/放马过来'\n";
+		prompt += "- 'That's on fire' -> '太火了/太牛了' (NOT: 那在着火)\n";
+		prompt += "- 'Rain check' -> '改天再说/延期' (NOT: 雨的支票)\n";
+		prompt += "- 'Piece of cake' -> '轻而易举' (NOT: 蛋糕片)\n";
+		prompt += "- 'Break the ice' -> '打破僵局' (NOT: 破冰)\n";
+		prompt += "- 'Hit the books' -> '开始学习' (NOT: 打书)\n";
+		prompt += "- 'Ball is in your court' -> '轮到你了/你来决定'\n";
+		prompt += "- 'Spill the tea' -> '说出秘密/爆料' (modern slang)\n";
+		prompt += "- 'Salty' -> '生气/不开心' (NOT: 咸的)\n";
+		prompt += "- 'Savage' -> '狠/无情/很厉害'\n";
+		prompt += "- 'Flex' -> '炫耀/显摆'\n";
+		prompt += "- 'Vibe' -> '感觉/氛围' (NOT: 振动)\n";
+		prompt += "- 'Lowkey' -> '其实/不太显眼地'\n";
+		prompt += "ALWAYS check if an English phrase is an idiom or slang before translating literally.\n";
+	}
+	else if (SrcLang == "ja")
+	{
+		prompt += "\nCULTURAL & SLANG CONTEXT (Japanese Source):\n";
+		prompt += "This is Japanese-language content. Focus on:\n";
+		prompt += "- Japanese anime/manga culture references\n";
+		prompt += "- Japanese honorifics and politeness levels (敬語)\n";
+		prompt += "- Japanese internet slang: '草' (lol), '推し' (favorite), 'やばい' (cool/scary)\n";
+		prompt += "- Cultural humor: slapstick, wordplay, reference humor\n";
+		prompt += "- School/youth culture specific terms\n";
+		prompt += "- Preserve emotional expressions typical of Japanese media\n";
+	}
+	else if (SrcLang == "ko")
+	{
+		prompt += "\nCULTURAL & SLANG CONTEXT (Korean Source):\n";
+		prompt += "This is Korean-language content. Focus on:\n";
+		prompt += "- Korean pop culture references (K-pop, K-drama)\n";
+		prompt += "- Korean honorifics and formality levels\n";
+		prompt += "- Korean internet slang and trendy expressions\n";
+		prompt += "- Hierarchy and respectful language patterns\n";
+		prompt += "- Korean youth culture specific terms\n";
+	}
+	else if (SrcLang == "fr")
+	{
+		prompt += "\nCULTURAL & SLANG CONTEXT (French Source):\n";
+		prompt += "This is French-language content. Focus on:\n";
+		prompt += "- French cultural references and humor\n";
+		prompt += "- French internet/youth slang\n";
+		prompt += "- Romantic and poetic language patterns common in French\n";
+		prompt += "- Preserve sophistication and elegance in translation\n";
+	}
+	else
+	{
+		prompt += "\nCULTURAL & SLANG CONTEXT:\n";
+		prompt += "Understand the cultural background of the source language and adapt slang/idioms accordingly.\n";
+	}
+	
+	prompt += "\nSlang & Informal Language (PART OF COLLOQUIAL SPEECH):\n";
+	prompt += "Slang and idioms are natural parts of how people actually speak. Handle them authentically:\n";
+	prompt += "- FIRST, BEFORE translating: Carefully check if the text contains slang, colloquialisms, idioms, or informal speech\n";
+	prompt += "- DO NOT instantly translate word-for-word (literal translation of idioms = completely wrong meaning)\n";
+	prompt += "- For EVERY phrase with multiple words, ask: 'Is this possibly an idiom or slang expression?'\n";
+	prompt += "- If uncertain whether something is literal or figurative, ALWAYS assume it might be slang first\n";
+	prompt += "- Find Chinese equivalents that capture the SPIRIT and TONE of the slang, keeping it natural and conversational\n";
+	prompt += "- Examples of slang->colloquial translation:\n";
+	prompt += "  * 'That's lit' (cool) -> '这太牛了' or '这真不错' (matches natural speech)\n";
+	prompt += "  * 'Yo, wassup' (hey) -> '嘿，怎么样' (keeps informal greeting tone)\n";
+	prompt += "  * 'Sucks' (bad) -> '太糟了' (matches everyday emotional expression)\n";
+	prompt += "  * 'It is on like Donkey Kong' (things are about to start) -> '要开干了' (NOT literal Donkey Kong, but natural slang)\n";
+	prompt += "- Use context clues to understand slang meaning when uncertain\n";
+	prompt += "- IMPORTANT: Keep the colloquial/casual tone in Chinese - slang HELPS maintain natural dialogue\n";
+	prompt += "- Adapt slang based on the cultural origin (American vs British vs Japanese vs Korean, etc.)\n";
+	prompt += "- CRITICAL: Always check multi-word English phrases - they are often idioms with hidden meanings!\n";
+	
+	// 添加翻译前的自检清单
+	prompt += "\n=== PRE-TRANSLATION CHECKLIST ===\n";
+	prompt += "Before translating, ALWAYS go through these checks:\n";
+	prompt += "1. Read the entire text carefully\n";
+	prompt += "2. Identify ANY phrases that might be slang/idioms (especially multi-word expressions)\n";
+	prompt += "3. Ask yourself: 'If I translate this word-for-word, does it make sense?'\n";
+	prompt += "4. If the literal translation seems odd or out of place, it's probably slang -> Find the actual meaning\n";
+	prompt += "5. Check the provided IDIOM LIST above for matches\n";
+	prompt += "6. Use context (previous translations) to confirm cultural appropriateness\n";
+	prompt += "7. Only THEN provide the final translation\n\n";
+	prompt += "RED FLAGS (high chance of slang/idiom):\n";
+	prompt += "- Phrases with animals mentioned literally ('like Donkey Kong', 'fish out of water')\n";
+	prompt += "- Phrases with body parts ('break your neck', 'blow my mind', 'cost an arm and a leg')\n";
+	prompt += "- Phrases with weather/nature ('under the weather', 'raining cats and dogs')\n";
+	prompt += "- Phrases with 'like' ('like a fish out of water', 'like Donkey Kong')\n";
+	prompt += "- Single-word slang that's informal (lit, salty, flex, vibe, savage, slay)\n";
+	prompt += "- Any phrase that doesn't make literal sense\n";
+	
 	if (srcLangName.length() == 0)
 		prompt += "\nTranslate to " + dstLangName + ".";
 	else
 		prompt += "\nTranslate from " + srcLangName + " to " + dstLangName + ".";
 	
-	// 添加上下文使用指引
+	// 添加上下文使用指引 - 加入智能判断机制
 	if (g_contextSource.length() > 0)
 	{
-		prompt += "\n\nIMPORTANT: Previous translations are provided as context for consistency.\n";
-		prompt += "Use them to ensure:\n";
-		prompt += "- Character names are translated consistently\n";
-		prompt += "- Terminology matches previous choices\n";
-		prompt += "- Tone and style are maintained\n";
-		prompt += "- Technical/specialized terms are used consistently\n";
+		prompt += "\n\nCONTEXT INTELLIGENCE REQUIRED:\n";
+		prompt += "Previous translations are provided below as conversation context.\n";
+		prompt += "IMPORTANT: Evaluate if this context is relevant to the current text:\n";
+		prompt += "- If the context is from the SAME conversation/scene -> Use it for consistency\n";
+		prompt += "- If the context is from a DIFFERENT scene/topic -> Ignore it, translate independently\n";
+		prompt += "- If context mentions SAME characters/topics -> Use it\n";
+		prompt += "- If context is about COMPLETELY DIFFERENT content -> Discard it\n\n";
+		prompt += "When using context, ensure:\n";
+		prompt += "- Character names match previous translations\n";
+		prompt += "- Terminology is consistent with context\n";
+		prompt += "- Tone and style align with conversation flow\n";
+		prompt += "- Technical/specialized terms use same definitions as context\n";
+		prompt += "- For slang: Use context to understand the exact meaning and attitude before translating\n\n";
+		prompt += "When NOT using context (different scene):\n";
+		prompt += "- Translate independently with high quality\n";
+		prompt += "- Maintain professional tone\n";
+		prompt += "- Do NOT force artificial consistency\n";
 	}
 	else
 	{
