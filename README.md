@@ -682,11 +682,109 @@ MIT License - 可自由使用和修改
 | 场景检测 | ✅ | 1.0+ | 可配置 1-60000ms |
 | Genre 分类 | ✅ | 1.0+ | 9 种内容类型 |
 | 完整缓存 | ✅ | 1.0+ | 避免重复调用 |
-| **口语化翻译** | ✅ | 2.0+ | 日常自然表达 ⭐ NEW |
-| **俚语识别** | ✅ | 2.0+ | 15+ 成语库 + 预检查 ⭐ NEW |
-| **文化适配** | ✅ | 2.0+ | 4种语言文化背景 ⭐ NEW |
-| **上下文智能** | ✅ | 2.0+ | 自动判断相关性 ⭐ NEW |
-| **AI自检** | ✅ | 2.0+ | 5项质量检查 ⭐ NEW |
+| **口语化翻译** | ✅ | 1.0+ | 日常自然表达 ⭐ |
+| **俚语识别** | ✅ | 1.0+ | 15+ 成语库 + 预检查 ⭐ |
+| **文化适配** | ✅ | 1.0+ | 4种语言文化背景 ⭐ |
+| **上下文智能** | ✅ | 1.0+ | 自动判断相关性 ⭐ |
+| **AI自检** | ✅ | 1.0+ | 5项质量检查 ⭐ |
+
+---
+
+## 🗺️ 产品路线图
+
+### v1.1a - 质量优化版 🔧  
+**投入**：2,500 tokens
+
+- 🔄 **自我修正机制** (1,000 tokens)
+   - AI翻译后运行质量自检（自然度/一致性/时态/代词指向）并在必要时触发修正或二次简要调用
+   - 包含示例检查：词性搭配、时态一致、代词指向
+   - 音韵流畅性检查：确保语句朗读顺畅、节奏与韵律自然，能押韵就押韵
+   - 预期质量提升：+3-5%
+
+- 🛡️ **错误防护库** (1,000 tokens)
+   - 输入校验（长度、控制字符、敏感词过滤）、输出校验（空翻、格式异常、明显偏离原意）
+   - 常见错误清单与避免规则（过度翻译、欠翻译、文化冒犯、过度本地化、代词混淆）
+   - 降级策略：返回缓存译文或原文并记录日志以便回滚
+   - 预期稳定性：+99.5%
+
+- 📊 **高级上下文分析** (500 tokens)
+   - 在 system prompt 中加入上下文关联判定流程（先评估再使用）：情绪/主角/关键词/叙事连续性
+   - 本地加入简单相似度阈值（决定是否把缓存作为上下文上送）
+   - 预期质量提升：+1-2%
+
+### v1.1b - 功能扩展版 🚀
+**投入**：2,500 tokens
+
+- 📚 **内置习语库扩展** (1,500 tokens)
+   - 将示例集合从 15+ 扩展到 ~50 条核心俚语（后期可扩展到 100），并整理多语言对应
+   - 将俚语库独立为可维护的配置/JSON，按需加载到提示词中
+   - 预期质量提升：+5%
+
+- 🎯 **特殊内容处理** (1,000 tokens)
+   - **歌词翻译模式**：优先韵脚对齐、节奏与音乐性，保持情感冲击力
+      - 示例提示：
+         ```
+         ===IF CONTEXT INDICATES LYRICS===
+         - Prioritize rhyme and flow over literal meaning
+         - Keep syllable count similar
+         - Maintain emotional impact
+         - Preserve punchlines
+         ```
+   - **诗词/散文**：保留意象与文学感，注意节奏感与意境而非逐字直译
+   - **技术文档**：保留术语精准、逻辑清晰与信息完整性（可启用 gamedev/tech 模式）
+   - **新闻/播报**：信息优先、表达中立简洁、避免情绪化改写
+   - **幽默/冷笑话**：保留笑点与反差，维护节奏以免破坏笑效
+   - 预期针对性提升：+10-20%
+
+上下文分析示例片段（将加入系统提示词）：
+```
+=== CONTEXT ANALYSIS ===
+For each context item, identify:
+1. Main character(s)
+2. Emotional tone (angry/happy/sad/neutral)
+3. Key concepts/terms
+4. Relationship between characters
+5. Narrative continuity
+
+When translating current line:
+- Maintain emotional thread
+- Use same terminology for same concepts
+- Match character relationship dynamics
+- Preserve narrative pacing
+```
+
+错误防护举例（将加入错误防护库与提示词）：
+```
+DON'T EVER:
+- ❌ Translate 'OK' as '好的' when character agrees reluctantly (use '行吧' instead)
+- ❌ Translate 'I'm fine' as '我很好' when character is depressed (use '我没事' or '我还活着')
+- ❌ Add explanation not in original (subtitles have limited time)
+- ❌ Make jokes more 'funny' than original (keep same impact level)
+```
+
+---
+
+## 💰 Token 预算规划
+
+```
+总容量：64,000 tokens (DeepSeek 模型)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+已发布版本：
+  v1.0.0：2,500 tokens ✅ 已使用
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+规划中版本：
+  v1.1a：2,500 tokens (质量优化)
+  v1.1b：2,500 tokens (功能扩展)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+小计：7,500 tokens (已用+规划)
+剩余预算：56,500 tokens
+
+安全阈值：总使用 < 30,000 tokens (避免幻觉风险)
+充裕度：充足，可持续优化到 v3.0+
+```
 
 ---
 
@@ -694,6 +792,7 @@ MIT License - 可自由使用和修改
 
 ### v1.0.0 - Official Release ⭐
 **当前版本（生产环境推荐）**
+
 - ✅ 实时AI字幕翻译（支持OpenAI、DeepSeek、通义千问、Gemini）
 - ✅ 8种内容类型特定翻译模式
 - ✅ 口语化翻译引擎（避免平淡生硬）
@@ -705,6 +804,7 @@ MIT License - 可自由使用和修改
 
 ### v0.9.0 - Beta
 **测试版（不再维护）**
+
 - 基础翻译功能
 - 多模型支持
 - 上下文感知（初级）
