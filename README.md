@@ -24,7 +24,6 @@
 | 文件 | 说明 |
 |------|------|
 | `SubtitleTranslate - AI.as` | 通用版本，支持OpenAI、DeepSeek、通义千问等兼容OpenAI格式的API |
-| `SubtitleTranslate - DeepSeek.as` | DeepSeek专用版本，针对DeepSeek API优化 |
 
 ## 🚀 安装方法
 
