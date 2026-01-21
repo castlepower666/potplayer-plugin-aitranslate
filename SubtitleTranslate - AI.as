@@ -435,11 +435,29 @@ string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, 
 	
 	string prompt = "You are a professional subtitle translator specializing in natural dialogue.\n\n";
 	
+	// === 口语化第一原则 ===
+	prompt += "=== COLLOQUIAL SPEECH FIRST (Most Critical) ===\n";
+	prompt += "FORGET formal Chinese. FORGET textbook language.\n";
+	prompt += "Think: How would a real person SAY this while chatting with friends?\n";
+	prompt += "Use: Casual particles (啊、呢、吧、嘛、呀、哈、啦、嗯), contractions, natural flow\n";
+	prompt += "Avoid: 我认为、被动句、成语堆积、书面语、学究式表达\n";
+	prompt += "Examples:\n";
+	prompt += "  ✗ Bad: \"我要去往那个地方\" (formal)\n";
+	prompt += "  ✓ Good: \"我要去那儿\" (natural)\n";
+	prompt += "  ✓ Better: \"我得去那儿一趟\" (colloquial)\n";
+	prompt += "  ✓ Best: \"我得过去一下\" (very natural)\n";
+	prompt += "Special Particles:\n";
+	prompt += "  啦: Completion/obviousness (\"搞定啦\"、\"来啦\")\n";
+	prompt += "  呢: Questioning/wondering (\"咋整呢\"、\"怎么办呢\")\n";
+	prompt += "  吧: Suggestion/uncertainty (\"走吧\"、\"这样吧\")\n";
+	prompt += "  嘛: Emphasis/obviousness (\"这不是嘛\"、\"谁都知道嘛\")\n";
+	prompt += "  呀: Exclamation (\"真的呀\"、\"天哪呀\")\n\n";
+	
 	// === 核心指导 ===
 	prompt += "=== CORE MANDATE ===\n";
 	prompt += "Translate subtitles as native " + dstLangName + " speakers would naturally SAY them while watching.\n";
 	prompt += "Priority: Natural speech > Dictionary meaning > Literal words\n";
-	prompt += "Style: Colloquial, conversational, emotionally authentic\n";
+	prompt += "Style: Colloquial, conversational, emotionally authentic, NOT 平淡/boring\n";
 	prompt += "Output: TRANSLATION ONLY - no explanations, no commentary\n\n";
 	
 	// === 字幕约束 ===
@@ -447,7 +465,8 @@ string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, 
 	prompt += "• Conciseness: Subtitles are READ while watching, not studied\n";
 	prompt += "• Pacing: Match pace of original dialogue\n";
 	prompt += "• Authenticity: Preserve tone, emotion, speaker personality\n";
-	prompt += "• Clarity: Every word must earn its place\n\n";
+	prompt += "• Clarity: Every word must earn its place\n";
+	prompt += "• Vividness: Make it interesting, not boring (NO 平淡 translations!)\n\n";
 	
 	// === 翻译决策树 ===
 	prompt += "=== TRANSLATION DECISION TREE ===\n";
@@ -474,6 +493,12 @@ string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, 
 	prompt += "STEP 5 - Consistency: Match character voice + previous terms?\n";
 	prompt += "  → Same character = same speech style\n";
 	prompt += "  → Same concept = same term\n\n";
+	
+	prompt += "STEP 6 - Vividness Check: Is it 平淡 (boring/dull)?\n";
+	prompt += "  ❌ BORING SIGNS: 没有感情、生硬、教科书式、字对字翻\n";
+	prompt += "  ✅ VIVID SIGNS: 有语气、自然顺畅、有人味、会说人话\n";
+	prompt += "  → Too plain: Re-translate with more character/emotion\n";
+	prompt += "  → Good: Accept\n\n";
 	
 	// === 语言特定指导 ===
 	if (SrcLang == "en")
@@ -506,7 +531,7 @@ string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, 
 		prompt += "  Aggressive (だ/よ) → 呀/咦 | Feminine (-わ/-の) → 啦/呢/哪\n\n";
 		
 		prompt += "ANIME TERMS:\n";
-		prompt += "  必殺技 → 必杀绝招 | 魔法 → 魔法/法术 | キャラ → 角色\n\n";
+		prompt += "  必殺技 → 必杀技 | 魔法 → 魔法/法术 | キャラ → 角色\n\n";
 		
 		prompt += "INTENSITY MARKERS:\n";
 		prompt += "  Passionate → 绝对/一定/非要 | Cute → 啦/呀/哪\n";
@@ -575,79 +600,76 @@ string GetGenreSpecificGuide(string genre)
 {
 	if (genre == "anime")
 	{
-		return "=== ANIME PRIORITY ===\n"
-			+ "1. EMOTIONAL AUTHENTICITY: Emotion > Literal meaning\n"
-			+ "2. CHARACTER VOICE: Cute → soft words | Cool → powerful words\n"
-			+ "3. CONSISTENCY: Same character = same speaking style\n"
-			+ "4. TONE MARKERS:\n"
-			+ "   Passionate → 绝对/一定 | Cute → 啦/呀/哪\n"
-			+ "   Angry → repetition/强调 | Shocked → 什么!?/怎么可能";
+		return "=== ANIME: Energetic, Expressive, Character-Driven ===\n"
+			+ "1. NATURAL DIALOGUE: Casual banter, jokes, playful tone\n"
+			+ "   Use particles, contractions, energetic expressions\n"
+			+ "2. CHARACTER DIFFERENTIATION: Cute girl ≠ cool boy\n"
+			+ "3. ACTION SCENES: Use power words, exclamations\n"
+			+ "4. EVERYDAY TALK: Casual, spontaneous, surprising reactions\n"
+			+ "5. PRESERVE CULTURE: Keep anime flavor while sounding natural";
 	}
 	else if (genre == "western-comic")
 	{
-		return "=== WESTERN COMICS PRIORITY ===\n"
-			+ "1. HUMOR & SARCASM: Punchline must LAND in Chinese\n"
-			+ "2. ACTION: Fight words must be DYNAMIC\n"
-			+ "3. CONFIDENCE: Bold, powerful language\n"
-			+ "4. POP CULTURE: Keep references, explain if needed\n"
-			+ "5. TONE: Witty, energetic, action-oriented";
+		return "=== WESTERN COMIC: Hilarious, Sarcastic, Punchy ===\n"
+			+ "1. HUMOR LANDS: Jokes must be funny, use exaggeration and contrast\n"
+			+ "2. CASUAL LANGUAGE WELCOME: Rough talk, slang, colloquial allowed\n"
+			+ "3. ONE-LINERS: Punch lines sharp and brief, no long setup\n"
+			+ "4. SARCASM: Make it obvious, use tone to signal mockery\n"
+			+ "5. ACTION IMPACTS: Sound effects, dynamic expressions for combat";
 	}
 	else if (genre == "scifi")
 	{
-		return "=== SCIFI PRIORITY ===\n"
-			+ "1. TECHNICAL PRECISION: Consistent jargon\n"
-			+ "2. WORLD-BUILDING: Plausible terminology\n"
-			+ "3. CLARITY: Step-by-step instructions exact\n"
-			+ "4. KEY TERMS: 引擎/系统/网络/数据 (establish early)\n"
-			+ "5. TONE: Direct, clear, professional";
+		return "=== SCI-FI: Terminology Clear, Worldbuilding Consistent ===\n"
+			+ "1. CONSISTENT JARGON: Define terms first time they appear\n"
+			+ "2. FUTURISTIC FEEL: Tech words should sound advanced, not archaic\n"
+			+ "3. SIMPLIFY COMPLEX IDEAS: Use analogies for clarity\n"
+			+ "4. EXPLAIN TECHNOLOGY: What is it? Why does it matter?\n"
+			+ "5. NATURAL LANGUAGE: Terminology doesn't mean alien phrasing";
 	}
 	else if (genre == "drama")
 	{
-		return "=== DRAMA PRIORITY ===\n"
-			+ "1. EMOTIONAL NUANCE: Subtext > text\n"
-			+ "2. AUTHENTICITY: Real speech patterns\n"
-			+ "3. DYNAMICS: Match relationship intimacy\n"
-			+ "4. TONE MARKERS:\n"
-			+ "   Vulnerable → 轻声/颤抖 | Angry → 质问/指责\n"
-			+ "   Tender → 温柔/靠近 | Conflicted → 犹豫/叹气";
+		return "=== DRAMA: Authentic, Nuanced, Emotionally Resonant ===\n"
+			+ "1. DIALOGUE AUTHENTICITY: Pauses, repetition, emotional shifts matter\n"
+			+ "2. SUBTEXT IS KEY: Unspoken emotion must be felt in phrasing\n"
+			+ "3. COLLOQUIAL EXTREME: Everyday conversation, not melodrama\n"
+			+ "4. RELATIONSHIPS IN WORDS: Intimacy, distance reflected in speech\n"
+			+ "5. SILENCE & RESTRAINT: One perfect line beats ten explanations";
 	}
 	else if (genre == "horror")
 	{
-		return "=== HORROR PRIORITY ===\n"
-			+ "1. ATMOSPHERE: Word choice creates DREAD\n"
-			+ "2. PACING: Short sharp sentences for tension\n"
-			+ "3. SCREAM QUALITY: Stark, primal exclamations\n"
-			+ "4. THREAT: Make danger feel REAL\n"
-			+ "5. TONE: Unsettling, creepy, menacing";
+		return "=== HORROR: Oppressive, Eerie, Tension-Filled ===\n"
+			+ "1. ATMOSPHERE OVER PLOT: Word choice creates DREAD\n"
+			+ "2. SHORT SENTENCES FOR TENSION: Brief, sharp dialogue\n"
+			+ "3. SCREAMS ARE PRIMAL: Raw, authentic emotional reactions\n"
+			+ "4. THREATS ARE COLD: Quiet menace scarier than rage\n"
+			+ "5. TONE IS RESTRAINED: Every line carries suppressed anxiety";
 	}
 	else if (genre == "disney")
 	{
-		return "=== DISNEY PRIORITY ===\n"
-			+ "1. WARMTH & MAGIC: Safe, wonderful feeling\n"
-			+ "2. EMOTIONAL AUTHENTICITY: Real emotions\n"
-			+ "3. ACCESSIBILITY: Simple, clear vocabulary\n"
-			+ "4. MUSICALITY: Rhythm and flow matter\n"
-			+ "5. TONE MARKERS:\n"
-			+ "   Loving → 亲爱的/宝贝 | Excited → 哇/太棒了\n"
-			+ "   Magical → 奇迹/梦想";
+		return "=== DISNEY: Warm, Hopeful, Family-Friendly ===\n"
+			+ "1. WARMTH IS PRIMARY: Draw people in, don't lecture\n"
+			+ "2. GENTLE WORD CHOICE: Inclusion, connection, belonging\n"
+			+ "3. LAUGHTER IS KINDNESS: Humor with heart, not mockery\n"
+			+ "4. MUSICAL QUALITY: Rhythmic dialogue, sing-song flow\n"
+			+ "5. COURAGE IS ORDINARY: Everyday people being brave";
 	}
 	else if (genre == "gamedev")
 	{
-		return "=== GAMEDEV PRIORITY ===\n"
-			+ "1. TECHNICAL ACCURACY: Consistent jargon\n"
-			+ "2. CLARITY: Learners aren't experts\n"
-			+ "3. KEY TERMS:\n"
-			+ "   Component → 组件 | Prefab → 预制体 | Scene → 场景\n"
-			+ "   Animation → 动画 | Shader → 着色器 | Collider → 碰撞器\n"
-			+ "4. PRECISION: Every step exact\n"
-			+ "5. TONE: Educational, clear, encouraging";
+		return "=== GAMEDEV: Clear, Encouraging, Practical ===\n"
+			+ "1. TERMINOLOGY PRECISION: Standard terms or plain language\n"
+			+ "2. PROGRESSION: Build concepts progressively, no info dumps\n"
+			+ "3. PROCESS-FIRST: Explain workflow before abstract theory\n"
+			+ "4. HONEST BUT SUPPORTIVE: Don't oversimplify, say 'this takes learning'\n"
+			+ "5. TONE: Like a knowledgeable friend teaching code";
 	}
 	else
 	{
-		return "=== GENERAL CONTENT ===\n"
-			+ "Apply core translation principles\n"
-			+ "Maintain natural dialogue flow\n"
-			+ "Preserve emotional authenticity";
+		return "=== GENERAL: Natural, Authentic, Engaging ===\n"
+			+ "1. DIALOGUE FIRST: Comfortable to read/hear, not study material\n"
+			+ "2. MEANING NOT WORDS: Literal translation always sounds wooden\n"
+			+ "3. CHARACTER VOICE: Different people speak differently\n"
+			+ "4. WHEN IN DOUBT: Use the most common phrasing\n"
+			+ "5. NATURAL LANGUAGE: If it sounds good, it IS good";
 	}
 }
 
@@ -754,7 +776,7 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	
 	// 添加当前要翻译的文本
 	body += "{\"role\":\"user\",\"content\":\"" + JsonEscape(Text) + "\"}";
-	body += "],\"temperature\":0.3,\"max_tokens\":1000}";
+	body += "],\"temperature\":0.0618,\"max_tokens\":1000}";
 	
 	// 构建URL
 	string url = g_baseUrl + "/v1/chat/completions";
