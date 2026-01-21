@@ -667,7 +667,8 @@ MIT License - 可自由使用和修改
 ---
 
 **最后更新**：2026年1月  
-**维护者**：castlepower666、GitHub Copilt
+**维护者**：castlepower666  
+**协作**：GitHub Copilot  
 **状态**：Production Ready ✅
 
 ---
