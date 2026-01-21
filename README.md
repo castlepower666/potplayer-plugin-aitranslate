@@ -667,7 +667,7 @@ MIT License - 可自由使用和修改
 ---
 
 **最后更新**：2026年1月  
-**维护者**：AI 字幕翻译团队  
+**维护者**：castlepower666、GitHub Copilt
 **状态**：Production Ready ✅
 
 ---
