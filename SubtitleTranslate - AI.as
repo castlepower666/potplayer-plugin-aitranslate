@@ -38,18 +38,21 @@ string GetLoginTitle()
 
 string GetLoginDesc()
 {
-		return "{$CP936=配置格式: URL|Model|Context|Genre|SceneThreshold\n"
-			+ "示例: https://api.deepseek.com|deepseek-chat|5|anime|6000\n\n"
+		return "{$CP936=配置格式: URL|Model|Context|Genre|SceneThreshold|CustomPrompt\n"
+			+ "示例: https://api.deepseek.com|deepseek-chat|5|anime|6000|你是一个翻译助手...\n\n"
 			+ "Genre选项: anime(日漫) western-comic(美漫) scifi fantasy drama horror disney gamedev general\n"
 			+ "Context: 0(无上下文) 3-5(推荐) 10+(强一致性)\n"
 			+ "SceneThreshold: 场景变更阈值(毫秒, 默认6000)\n"
-			+ "默认: Model=deepseek-chat, Context=5, Genre=general, SceneThreshold=6000"
-			+ "}Format: URL|Model|Context|Genre|SceneThreshold\n"
-			+ "Example: https://api.deepseek.com|deepseek-chat|5|anime|6000\n\n"
+			+ "CustomPrompt: 自定义提示词(可选)，会追加到系统提示词末尾\n"
+			+ "默认: Model=deepseek-chat, Context=5, Genre=general, SceneThreshold=6000, CustomPrompt=无"
+			+ "}Format: URL|Model|Context|Genre|SceneThreshold|CustomPrompt\n"
+			+ "Example: https://api.deepseek.com|deepseek-chat|5|anime|6000|You are a translator...\n\n"
 			+ "Genre: anime western-comic scifi fantasy drama horror disney gamedev general\n"
 			+ "Context: 0(no context) 3-5(recommended) 10+(strong consistency)\n"
 			+ "SceneThreshold: Scene change threshold in milliseconds (default: 6000)\n"
-			+ "Default: deepseek-chat, 5, general, 6000";}
+			+ "CustomPrompt: Optional custom prompt, appended to system prompt\n"
+			+ "Default: deepseek-chat, 5, general, 6000, CustomPrompt=none";
+}
 string GetUserText()
 {
 	return "{$CP936=API地址|模型|上下文:}URL|Model|Context:";
@@ -65,6 +68,7 @@ string g_apiKey = "";
 string g_baseUrl = "";
 string g_model = "deepseek-chat";
 string g_genre = "general";
+string g_customPrompt = "";  // 用户自定义提示词
 uint g_sceneChangeThreshold = 6000;  // 毫秒，场景切换阈值
 
 // ============ 内容类型相关函数 ============
@@ -251,6 +255,13 @@ string ServerLogin(string User, string Pass)
 		}
 	}
 	
+	// 解析CustomPrompt（可选，有值时才读取）
+	g_customPrompt = "";  // 默认无自定义提示词
+	if (parts.length() >= 6 && parts[5].length() > 0)
+	{
+		g_customPrompt = parts[5];
+	}
+	
 	// 去除末尾斜杠
 	if (g_baseUrl.Right(1) == "/") g_baseUrl = g_baseUrl.Left(g_baseUrl.length() - 1);
 	
@@ -261,6 +272,7 @@ string ServerLogin(string User, string Pass)
 	HostSaveString("AI_Trans_History", "" + g_maxHistory);
 	HostSaveString("AI_Trans_Genre", g_genre);
 	HostSaveString("AI_Trans_SceneThreshold", "" + g_sceneChangeThreshold);
+	HostSaveString("AI_Trans_CustomPrompt", g_customPrompt);
 	
 	// 打印调试信息到控制台
 	HostPrintUTF8("=== AI Translator Config Loaded ===\n");
@@ -269,13 +281,15 @@ string ServerLogin(string User, string Pass)
 	HostPrintUTF8("Context: " + g_maxHistory + "\n");
 	HostPrintUTF8("Genre: " + g_genre + "\n");
 	HostPrintUTF8("SceneThreshold: " + g_sceneChangeThreshold + "ms\n");
+	HostPrintUTF8("CustomPrompt: " + (g_customPrompt.length() > 0 ? g_customPrompt : "(none)") + "\n");
 	
-	return "200 ok|{$CP936=配置成功! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms}OK! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms";
+	return "200 ok|{$CP936=配置成功! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms" + (g_customPrompt.length() > 0 ? " CustomPrompt:已设置" : "") + "}OK! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms" + (g_customPrompt.length() > 0 ? " CustomPrompt:set" : "");
 }
 
 void ServerLogout()
 {
 	g_apiKey = "";
+	g_customPrompt = "";
 	ClearHistory();
 }
 
@@ -587,10 +601,21 @@ string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, 
 	prompt += "✓ Consistency: Does it match previous terms?\n";
 	prompt += "✓ Length: Appropriate for subtitles?\n\n";
 	
+	// === 最终翻译指令 ===
 	if (srcLangName.length() == 0)
 		prompt += "Translate to " + dstLangName + ".";
 	else
 		prompt += "Translate from " + srcLangName + " to " + dstLangName + ".";
+	
+	// === 用户自定义提示词（追加到末尾） ===
+	if (g_customPrompt.length() > 0)
+	{
+		prompt += "\n\n=== USER CUSTOM PROMPT ===\n";
+		prompt += "USER'S REQUEST HAS HIGHER PRIORITY WHEN CONFLICTS OCCUR. ";
+		prompt += "If user's request conflicts with system rules (colloquial speech, genre guidelines, etc.), ";
+		prompt += "FOLLOW USER'S REQUEST. Otherwise, combine both system rules and user preferences.\n\n";
+		prompt += JsonEscape(g_customPrompt) + "\n";
+	}
 	
 	return prompt;
 }
@@ -717,6 +742,9 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 		g_sceneChangeThreshold = uint(thresholdVal);
 	else
 		g_sceneChangeThreshold = 6000;
+	
+	// 加载自定义提示词配置
+	g_customPrompt = HostLoadString("AI_Trans_CustomPrompt", "");
 	
 	// 检查配置
 	if (g_apiKey.length() == 0) return "";

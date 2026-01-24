@@ -47,7 +47,7 @@
 
 **配置格式**：
 ```
-URL|Model|ContextCount|Genre|SceneThreshold
+URL|Model|ContextCount|Genre|SceneThreshold|CustomPrompt
 API Key
 ```
 
@@ -57,25 +57,30 @@ API Key
 - `ContextCount` - 上下文条数，0-20（可选，默认5）
 - `Genre` - 内容类型（可选，默认general）
 - `SceneThreshold` - 场景切换检测时间，1-60000ms（可选，默认6000ms）⭐ NEW
+- `CustomPrompt` - 用户自定义提示词（可选，会追加到系统提示词末尾）⭐ NEW
 
-**必填参数**：只有 `URL` 和 `API Key` 是必需的，其他参数省略时使用智能默认值。
+**重要提示**：必须保留所有 `|` 分隔符，省略参数时使用空位表示。
 
 **配置示例**：
 ```
-# 标准配置（动漫，5条上下文，6秒场景检测）
-https://api.deepseek.com|deepseek-chat|5|anime|6000
+# 标准配置（动漫，5条上下文，6秒场景检测，自定义提示词）
+https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
 sk-xxxxxxxxxxxxx
 
-# 最小配置（仅API地址和Key）
-https://api.deepseek.com
+# 最小配置（仅API地址和Key，其他参数使用默认值）
+https://api.deepseek.com|||||
 sk-xxxxxxxxxxxxx
 
-# 快速翻译（无上下文，3秒场景检测）
-https://api.deepseek.com|deepseek-chat|0||3000
+# 快速翻译（无上下文，3秒场景检测，无自定义提示词）
+https://api.deepseek.com|deepseek-chat|0||3000|
 sk-xxxxxxxxxxxxx
 
-# 高质量（10条上下文，科幻题材，8秒场景检测）
-https://api.deepseek.com|deepseek-chat|10|scifi|8000
+# 高质量（10条上下文，科幻题材，8秒场景检测，自定义提示词）
+https://api.deepseek.com|deepseek-chat|10|scifi|8000|请使用专业科幻术语
+sk-xxxxxxxxxxxxx
+
+# 自定义风格（使用默认模型和上下文，自定义翻译风格）
+https://api.deepseek.com||5|||请使用文言文风格，保持信达雅
 sk-xxxxxxxxxxxxx
 ```
 
@@ -155,7 +160,7 @@ string g_baseUrl = "https://api.deepseek.com";  // 或其他API地址
 
 这些粒子使翻译更具自然感，避免生硬和平淡。
 
-## 🎬 内容类型（Genre）功能详解
+##  内容类型（Genre）功能详解
 
 Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种内容类型都已用英文提示词重新设计，确保多语言适配一致性。
 
@@ -238,6 +243,14 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 | gamedev | 你需要附加一个 Collider 组件来启用物理交互。|
 | general | 你需要附加一个碰撞器组件来启用物理交互。|
 
+### Genre 使用注意事项
+
+- Genre 参数完全可选，不设置时默认为 `general`
+- 无效的 Genre 会自动回退到 `general`，不会导致错误
+- 添加 Genre 会增加约 5-10% 的 API 成本（因为 Prompt 变长）
+- 更改 Genre 无需重启，重新登录新配置即可生效
+
+
 ### 上下文条数建议
 
 - **0条**：无上下文，最快翻译（可能缺乏连贯性）
@@ -261,12 +274,111 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 - 高质量剧情：`|deepseek-chat|8|drama|10000` (8条上下文，10秒检测)
 - 教学视频：`|deepseek-chat|5|gamedev|15000` (5条上下文，15秒检测)
 
-### Genre 使用注意事项
+## 🎯 用户自定义提示词功能 ⭐ NEW
 
-- Genre 参数完全可选，不设置时默认为 `general`
-- 无效的 Genre 会自动回退到 `general`，不会导致错误
-- 添加 Genre 会增加约 5-10% 的 API 成本（因为 Prompt 变长）
-- 更改 Genre 无需重启，重新登录新配置即可生效
+### 功能概述
+
+用户自定义提示词功能允许用户在系统提示词的基础上追加个性化的翻译指导，实现更精细的翻译风格控制。
+
+### 配置方式
+
+在配置的第6个参数中添加自定义提示词：
+```
+URL|Model|Context|Genre|SceneThreshold|CustomPrompt
+```
+
+**示例**：
+```
+https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用文言文风格翻译
+```
+
+### 使用场景示例
+
+#### 文言文风格翻译
+```
+https://api.deepseek.com|deepseek-chat|5|general|6000|请使用文言文风格翻译，保持信达雅
+```
+
+#### 学术风格翻译
+```
+https://api.deepseek.com|deepseek-chat|5|general|6000|使用正式学术用语，避免口语化表达
+```
+
+#### 儿童内容翻译
+```
+https://api.deepseek.com|deepseek-chat|5|disney|6000|翻译成简单易懂的语言，适合儿童阅读
+```
+
+#### 保留原味翻译
+```
+https://api.deepseek.com|deepseek-chat|5|general|6000|尽量保留原文的语调和情感，不要过于正式
+```
+
+### 技术实现
+
+#### 提示词构建流程
+1. **系统提示词** - 构建专业翻译规则和质量检查流程
+2. **内容类型指导** - 根据 Genre 添加特定领域指导
+3. **用户自定义提示词** - 在末尾追加个性化指导
+4. **完整提示词** - 发送给 AI 模型
+
+#### 优先级处理机制 ⭐ NEW
+系统采用智能优先级处理机制，确保用户需求与系统规则的最佳结合：
+
+**冲突处理原则**：
+- **当用户请求与系统规则冲突时** → 用户请求优先
+- **当用户请求与系统规则互补时** → 结合使用
+- **当用户请求是系统规则的细化时** → 结合使用
+
+**具体示例**：
+- **冲突场景**：用户要求"使用正式学术用语" vs 系统默认"口语化优先" → 遵循用户请求
+- **互补场景**：用户要求"请保持术语一致性" + 系统"口语化优先" → 结合使用
+- **细化场景**：用户要求"请使用更生动的比喻" + 系统"口语化优先" → 结合使用
+
+**AI接收的优先级说明**：
+```
+=== USER CUSTOM PROMPT ===
+USER'S REQUEST HAS HIGHER PRIORITY WHEN CONFLICTS OCCUR. 
+If user's request conflicts with system rules (colloquial speech, 
+genre guidelines, etc.), FOLLOW USER'S REQUEST. 
+Otherwise, combine both system rules and user preferences.
+
+用户自定义的翻译指导
+```
+
+#### 最终提示词结构
+```
+系统专业翻译规则...
+质量检查流程...
+内容类型指导...
+
+=== USER CUSTOM PROMPT ===
+用户自定义的翻译指导
+```
+
+### 注意事项
+
+1. **分隔符必须保留** - 省略参数时使用空位 `|` 表示
+2. **提示词长度** - 过长的自定义提示词可能增加 API 成本
+3. **效果验证** - 建议先测试小段文字验证翻译效果
+4. **参数顺序** - 必须按照固定顺序填写参数
+
+### 配置示例大全
+
+```
+# 标准配置 + 自定义提示词
+https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
+
+# 仅设置自定义提示词（其他参数使用默认值）
+https://api.deepseek.com|||||请使用文言文风格，保持信达雅
+
+# 快速翻译 + 简洁风格指导
+https://api.deepseek.com|deepseek-chat|0||3000|翻译要简洁明了，避免冗长
+
+# 高质量翻译 + 专业术语指导
+https://api.deepseek.com|deepseek-chat|10|scifi|8000|请使用专业科幻术语，保持技术准确性
+```
+
 
 ## 💬 口语化翻译原则 ⭐ NEW
 
