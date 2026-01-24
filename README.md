@@ -346,39 +346,6 @@ Otherwise, combine both system rules and user preferences.
 用户自定义的翻译指导
 ```
 
-#### 最终提示词结构
-```
-系统专业翻译规则...
-质量检查流程...
-内容类型指导...
-
-=== USER CUSTOM PROMPT ===
-用户自定义的翻译指导
-```
-
-### 注意事项
-
-1. **分隔符必须保留** - 省略参数时使用空位 `|` 表示
-2. **提示词长度** - 过长的自定义提示词可能增加 API 成本
-3. **效果验证** - 建议先测试小段文字验证翻译效果
-4. **参数顺序** - 必须按照固定顺序填写参数
-
-### 配置示例大全
-
-```
-# 标准配置 + 自定义提示词
-https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
-
-# 仅设置自定义提示词（其他参数使用默认值）
-https://api.deepseek.com|||||请使用文言文风格，保持信达雅
-
-# 快速翻译 + 简洁风格指导
-https://api.deepseek.com|deepseek-chat|0||3000|翻译要简洁明了，避免冗长
-
-# 高质量翻译 + 专业术语指导
-https://api.deepseek.com|deepseek-chat|10|scifi|8000|请使用专业科幻术语，保持技术准确性
-```
-
 
 ## 💬 口语化翻译原则 ⭐ NEW
 
@@ -618,6 +585,15 @@ https://api.deepseek.com|deepseek-chat|10|scifi|8000|请使用专业科幻术语
 最终返回：\"我真的无法言喻有多爱你。\"
 ```
 
+#### 最终提示词结构
+```
+系统专业翻译规则...
+质量检查流程...
+内容类型指导...
+
+=== USER CUSTOM PROMPT ===
+用户自定义的翻译指导
+```
 ## ⚠️ 注意事项
 
 1. **网络要求**：需要稳定的网络连接访问API服务
@@ -730,28 +706,30 @@ A: 目前暂不支持直接自定义俚语库，但可以通过提高 ContextCou
 # Step 4: 选择字幕，翻译开始！
 ```
 
-### 选择适合的配置
 
-**快速翻译**：
-```
-https://api.deepseek.com|deepseek-chat|0
-```
 
-**标准配置**：
-```
-https://api.deepseek.com|deepseek-chat|5
-```
+### 注意事项
 
-**高质量 + 内容特定**：
-```
-https://api.deepseek.com|deepseek-chat|8|anime
-```
+1. **分隔符必须保留** - 省略参数时使用空位 `|` 表示
+2. **提示词长度** - 过长的自定义提示词可能增加 API 成本
+3. **效果验证** - 建议先测试小段文字验证翻译效果
+4. **参数顺序** - 必须按照固定顺序填写参数
 
-**OpenAI 配置**：
-```
-https://api.openai.com/v1/chat/completions|gpt-3.5-turbo|5|scifi
-```
+### 配置示例大全
 
+```
+# 标准配置 + 自定义提示词
+https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
+
+# 仅设置自定义提示词（其他参数使用默认值）
+https://api.deepseek.com|||||请使用文言文风格，保持信达雅
+
+# 快速翻译 + 简洁风格指导
+https://api.deepseek.com|deepseek-chat|0||3000|翻译要简洁明了，避免冗长
+
+# 高质量翻译 + 专业术语指导
+https://api.deepseek.com|deepseek-chat|10|scifi|8000|请使用专业科幻术语，保持技术准确性
+```
 ## 📝 开发说明
 
 插件基于AngelScript开发，主要函数：
