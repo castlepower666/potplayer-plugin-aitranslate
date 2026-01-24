@@ -1,6 +1,6 @@
 # PotPlayer AI字幕翻译插件
 
-> **版本：v1.0.0** | **状态：Official Release** ✅
+> **版本：v1.1.0** | **状态：Official Release** ✅
 
 ## 📖 简介
 
