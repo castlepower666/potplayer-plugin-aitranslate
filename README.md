@@ -23,6 +23,8 @@
 - ✅ **配置持久化增强** - 一次配置，永久使用，关闭软件后配置仍然有效
 - ✅ **向后兼容保障** - 不影响现有用户正常使用
 
+
+
 ## 📁 插件文件
 
 | 文件 | 说明 |
@@ -68,23 +70,23 @@ API Key
 **配置示例**：
 ```
 # 标准配置（动漫，5条上下文，6秒场景检测，自定义提示词）
-https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
+https://api.deepseek.com/v1|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
 sk-xxxxxxxxxxxxx
 
 # 最小配置（仅API地址和Key，其他参数使用默认值）
-https://api.deepseek.com|||||
+https://api.deepseek.com/v1|||||
 sk-xxxxxxxxxxxxx
 
 # 快速翻译（无上下文，3秒场景检测，无自定义提示词）
-https://api.deepseek.com|deepseek-chat|0||3000|
+https://api.deepseek.com/v1|deepseek-chat|0||3000|
 sk-xxxxxxxxxxxxx
 
 # 高质量（10条上下文，科幻题材，8秒场景检测，自定义提示词）
-https://api.deepseek.com|deepseek-chat|10|scifi|8000|请使用专业科幻术语
+https://api.deepseek.com/v1|deepseek-chat|10|scifi|8000|请使用专业科幻术语
 sk-xxxxxxxxxxxxx
 
 # 自定义风格（使用默认模型和上下文，自定义翻译风格）
-https://api.deepseek.com||5|||请使用文言文风格，保持信达雅
+https://api.deepseek.com/v1||5|||请使用文言文风格，保持信达雅
 sk-xxxxxxxxxxxxx
 ```
 
@@ -94,7 +96,7 @@ sk-xxxxxxxxxxxxx
 
 ```angelscript
 string g_apiKey = "你的API Key";
-string g_baseUrl = "https://api.deepseek.com";  // 或其他API地址
+string g_baseUrl = "https://api.deepseek.com/v1";  // 或其他API地址
 ```
 
 ## 🔑 获取API Key
@@ -108,13 +110,11 @@ string g_baseUrl = "https://api.deepseek.com";  // 或其他API地址
 1. 访问 https://platform.deepseek.com
 2. 注册账户并充值
 3. 在控制台获取API Key
-4. API地址：`https://api.deepseek.com`
 
 ### 通义千问
 1. 访问 https://dashscope.aliyun.com
 2. 开通服务
 3. 获取API Key
-4. API地址：`https://dashscope.aliyuncs.com/compatible-mode`
 
 ### 其他兼容服务
 任何兼容OpenAI API格式的服务都可以使用，只需修改API地址即可。
@@ -174,55 +174,55 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 - **适用**：日本动画、日系漫画改编作品
 - **特点**：NATURAL DIALOGUE、CHARACTER DIFFERENTIATION、ACTION SCENES with power words
 - **关键原则**：角色对话要自然，不同角色有不同的说话风格
-- **推荐**：`https://api.deepseek.com|deepseek-chat|5|anime`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|anime`
 
 #### 2. **western-comic**（欧美动画/漫画）
 - **适用**：美国漫画、欧美动画、好莱坞风格内容
 - **特点**：HUMOR LANDS（笑点必须好笑）、CASUAL LANGUAGE（粗俗/俚语可用）、ONE-LINERS（简洁有力）
 - **关键原则**：笑点落地，讽刺明显，动感十足
-- **推荐**：`https://api.deepseek.com|deepseek-chat|5|western-comic`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|western-comic`
 
 #### 3. **scifi**（科幻）
 - **适用**：科幻电影、未来题材
 - **特点**：CONSISTENT JARGON（术语一致）、FUTURISTIC FEEL（未来感）、SIMPLIFY COMPLEX（简化复杂概念）
 - **关键原则**：术语必须一致，解释技术的用途和意义
-- **推荐**：`https://api.deepseek.com|deepseek-chat|8|scifi`（建议用8条上下文）
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|8|scifi`（建议用8条上下文）
 
 #### 4. **disney**（迪士尼）
 - **适用**：儿童电影、家庭内容
 - **特点**：WARMTH IS PRIMARY（亲切感）、GENTLE WORD CHOICE（包容感）、LAUGHTER IS KINDNESS（善良的幽默）
 - **关键原则**：温暖、积极、充满希望，不是被教育而是被吸引
-- **推荐**：`https://api.deepseek.com|deepseek-chat|5|disney`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|disney`
 
 #### 5. **fantasy**（奇幻）⭐ ENHANCED
 - **适用**：魔幻剧集、冒险故事
 - **特点**：史诗感，奇幻术语（魔法、精灵、龙），宏大英勇
 - **关键原则**：保留世界观一致性，术语翻译统一
-- **推荐**：`https://api.deepseek.com|deepseek-chat|5|fantasy`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|fantasy`
 
 #### 6. **drama**（剧情）
 - **适用**：电视剧、现代故事
 - **特点**：DIALOGUE AUTHENTICITY（真实对白）、SUBTEXT IS KEY（潜台词）、COLLOQUIAL EXTREME（极度口语）
 - **关键原则**：自然、细腻、有感情，对话要真实可信
-- **推荐**：`https://api.deepseek.com|deepseek-chat|3|drama`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|3|drama`
 
 #### 7. **horror**（恐怖）
 - **适用**：恐怖电影、惊悚内容
 - **特点**：ATMOSPHERE OVER PLOT（气氛比情节重要）、SHORT SENTENCES（短句制造紧张）、COLD THREATS（冷酷威胁）
 - **关键原则**：压抑、诡异、很有张力，不靠吓而靠造势
-- **推荐**：`https://api.deepseek.com|deepseek-chat|5|horror`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|horror`
 
 #### 8. **gamedev**（游戏开发教程）
 - **适用**：Unity、Unreal Engine 等游戏开发教程
 - **特点**：TERMINOLOGY PRECISION（术语精准）、PROGRESSION（循序渐进）、HONEST BUT SUPPORTIVE（坦诚但鼓励）
 - **关键原则**：清楚、鼓励、实用，像朋友在教你代码
-- **推荐**：`https://api.deepseek.com|deepseek-chat|5|gamedev`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|gamedev`
 
 #### 9. **general**（通用，默认）
 - **适用**：不确定的内容
 - **特点**：DIALOGUE FIRST（优先自然对白）、MEANING NOT WORDS（意思而非字对字）、CHARACTER VOICE（保持人物个性）
 - **关键原则**：自然、真实、好听，如果听起来好就是对的
-- **推荐**：`https://api.deepseek.com|deepseek-chat|5|general`
+- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|general`
 
 ### 翻译效果对比示例
 
@@ -293,29 +293,29 @@ URL|Model|Context|Genre|SceneThreshold|CustomPrompt
 
 **示例**：
 ```
-https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用文言文风格翻译
+https://api.deepseek.com/v1|deepseek-chat|5|anime|6000|请使用文言文风格翻译
 ```
 
 ### 使用场景示例
 
 #### 文言文风格翻译
 ```
-https://api.deepseek.com|deepseek-chat|5|general|6000|请使用文言文风格翻译，保持信达雅
+https://api.deepseek.com/v1|deepseek-chat|5|general|6000|请使用文言文风格翻译，保持信达雅
 ```
 
 #### 学术风格翻译
 ```
-https://api.deepseek.com|deepseek-chat|5|general|6000|使用正式学术用语，避免口语化表达
+https://api.deepseek.com/v1|deepseek-chat|5|general|6000|使用正式学术用语，避免口语化表达
 ```
 
 #### 儿童内容翻译
 ```
-https://api.deepseek.com|deepseek-chat|5|disney|6000|翻译成简单易懂的语言，适合儿童阅读
+https://api.deepseek.com/v1|deepseek-chat|5|disney|6000|翻译成简单易懂的语言，适合儿童阅读
 ```
 
 #### 保留原味翻译
 ```
-https://api.deepseek.com|deepseek-chat|5|general|6000|尽量保留原文的语调和情感，不要过于正式
+https://api.deepseek.com/v1|deepseek-chat|5|general|6000|尽量保留原文的语调和情感，不要过于正式
 ```
 
 ### 技术实现
@@ -704,7 +704,7 @@ A: 目前暂不支持直接自定义俚语库，但可以通过提高 ContextCou
 # Step 2: 重启 PotPlayer
 
 # Step 3: 在字幕翻译设置中输入
-# 配置：https://api.deepseek.com|deepseek-chat|5|anime
+# 配置：https://api.deepseek.com/v1|deepseek-chat|5|anime
 # Key：sk-xxxxxxxxxxxxx
 
 # Step 4: 选择字幕，翻译开始！
@@ -723,16 +723,16 @@ A: 目前暂不支持直接自定义俚语库，但可以通过提高 ContextCou
 
 ```
 # 标准配置 + 自定义提示词
-https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
+https://api.deepseek.com/v1|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
 
 # 仅设置自定义提示词（其他参数使用默认值）
-https://api.deepseek.com|||||请使用文言文风格，保持信达雅
+https://api.deepseek.com/v1|||||请使用文言文风格，保持信达雅
 
 # 快速翻译 + 简洁风格指导
-https://api.deepseek.com|deepseek-chat|0||3000|翻译要简洁明了，避免冗长
+https://api.deepseek.com/v1|deepseek-chat|0||3000|翻译要简洁明了，避免冗长
 
 # 高质量翻译 + 专业术语指导
-https://api.deepseek.com|deepseek-chat|10|scifi|8000|请使用专业科幻术语，保持技术准确性
+https://api.deepseek.com/v1|deepseek-chat|10|scifi|8000|请使用专业科幻术语，保持技术准确性
 ```
 ## 📝 开发说明
 
@@ -884,8 +884,7 @@ DON'T EVER:
 剩余预算：56,125 tokens
 
 安全阈值：总使用 < 30,000 tokens (避免幻觉风险)
-充裕度：充足，可持续优化到 v3.0+
-```
+充裕度：充足，可持续优化到 v3.0## 📖 简介
 
 **v1.1.0 Token 增加说明**：
 - 用户自定义提示词功能增加约 **75 tokens**（固定部分）

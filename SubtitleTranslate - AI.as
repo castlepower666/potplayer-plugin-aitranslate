@@ -807,7 +807,7 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	body += "],\"temperature\":0.0618,\"max_tokens\":1000}";
 	
 	// 构建URL
-	string url = g_baseUrl + "/v1/chat/completions";
+	string url = g_baseUrl + "/chat/completions";
 	
 	string header = "Content-Type: application/json\r\nAuthorization: Bearer " + g_apiKey;
 	
