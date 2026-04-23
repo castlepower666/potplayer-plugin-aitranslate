@@ -33,29 +33,16 @@ string GetDesc()
 
 string GetLoginTitle()
 {
-	return "{$CP936=API设置}API Settings";
+	return "API Settings";
 }
 
 string GetLoginDesc()
 {
-		return "{$CP936=配置格式: URL|Model|Context|Genre|SceneThreshold|CustomPrompt\n"
-			+ "示例: https://api.deepseek.com|deepseek-chat|5|anime|6000|你是一个翻译助手...\n\n"
-			+ "Genre选项: anime(日漫) western-comic(美漫) scifi fantasy drama horror disney gamedev general\n"
-			+ "Context: 0(无上下文) 3-5(推荐) 10+(强一致性)\n"
-			+ "SceneThreshold: 场景变更阈值(毫秒, 默认6000)\n"
-			+ "CustomPrompt: 自定义提示词(可选)，会追加到系统提示词末尾\n"
-			+ "默认: Model=deepseek-chat, Context=5, Genre=general, SceneThreshold=6000, CustomPrompt=无"
-			+ "}Format: URL|Model|Context|Genre|SceneThreshold|CustomPrompt\n"
-			+ "Example: https://api.deepseek.com|deepseek-chat|5|anime|6000|You are a translator...\n\n"
-			+ "Genre: anime western-comic scifi fantasy drama horror disney gamedev general\n"
-			+ "Context: 0(no context) 3-5(recommended) 10+(strong consistency)\n"
-			+ "SceneThreshold: Scene change threshold in milliseconds (default: 6000)\n"
-			+ "CustomPrompt: Optional custom prompt, appended to system prompt\n"
-			+ "Default: deepseek-chat, 5, general, 6000, CustomPrompt=none";
+		return "URL|Model|Context|Genre|SceneThreshold|CustomPrompt\n";
 }
 string GetUserText()
 {
-	return "{$CP936=API地址|模型|上下文:}URL|Model|Context:";
+	return "URL|Model|Context:";
 }
 
 string GetPasswordText()
@@ -70,80 +57,6 @@ string g_model = "deepseek-chat";
 string g_genre = "general";
 string g_customPrompt = "";  // 用户自定义提示词
 uint g_sceneChangeThreshold = 6000;  // 毫秒，场景切换阈值
-
-// ============ 内容类型相关函数 ============
-string GetGenrePromptSuffix(string genre)
-{
-	if (genre == "anime")
-	{
-		return "\nSpecial Notes for Japanese Anime:\n"
-			+ "- Use appropriate Chinese terms for anime-specific concepts (e.g., 法师 for mage, 魔法 for magic)\n"
-			+ "- Maintain consistent naming for character titles and abilities\n"
-			+ "- Preserve Japanese honorifics appropriately translated (如：-chan, -san, -sama)\n"
-			+ "- Use natural expressions common in Chinese anime translations\n"
-			+ "- Capture the emotional and dramatic style typical of Japanese animation\n";
-	}
-	else if (genre == "western-comic")
-	{
-		return "\nSpecial Notes for Western Comics/Animation:\n"
-			+ "- Use dynamic and straightforward English-origin terminology (e.g., Superhero超级英雄, Villain恶棍)\n"
-			+ "- Maintain consistency with Western pop culture references and expressions\n"
-			+ "- Preserve bold, direct, and action-oriented dialogue style\n"
-			+ "- Use energetic and impactful expressions common in Western animation\n"
-			+ "- Focus on humor, sarcasm, and witty remarks typical of Western storytelling\n";
-	}
-	else if (genre == "scifi")
-	{
-		return "\nSpecial Notes for Science Fiction:\n"
-			+ "- Use precise technical terminology (e.g., 粒子加速器 for particle accelerator)\n"
-			+ "- Maintain consistency in scientific terms and concepts\n"
-			+ "- Preserve futuristic and technical jargon appropriately\n"
-			+ "- Use professional scientific language\n";
-	}
-	else if (genre == "disney")
-	{
-		return "\nSpecial Notes for Disney/Children's Content:\n"
-			+ "- Use warm, friendly, and whimsical language\n"
-			+ "- Make expressions more endearing (e.g., 小姐姐, 亲爱的)\n"
-			+ "- Maintain magical and fantastical tone\n"
-			+ "- Use family-friendly expressions\n";
-	}
-	else if (genre == "fantasy")
-	{
-		return "\nSpecial Notes for Fantasy:\n"
-			+ "- Use epic and mystical language\n"
-			+ "- Maintain consistency in fantasy world terminology (魔法, 精灵, 龙等)\n"
-			+ "- Preserve grand and heroic tone\n"
-			+ "- Create immersive fantasy atmosphere\n";
-	}
-	else if (genre == "drama")
-	{
-		return "\nSpecial Notes for Drama:\n"
-			+ "- Use natural, realistic, and emotional language\n"
-			+ "- Capture subtle emotions and nuances\n"
-			+ "- Maintain authentic dialogue feel\n"
-			+ "- Preserve human relationships and emotional depth\n";
-	}
-	else if (genre == "horror")
-	{
-		return "\nSpecial Notes for Horror:\n"
-			+ "- Use ominous, atmospheric, and unsettling language\n"
-			+ "- Create tension and suspense through word choice\n"
-			+ "- Maintain eerie and creepy atmosphere\n"
-			+ "- Use dark and foreboding expressions\n";
-	}
-	else if (genre == "gamedev")
-	{
-		return "\nSpecial Notes for Game Development Tutorials:\n"
-			+ "- Use precise game engine terminology (Unity: Component, Prefab, Scene; Unreal: Actor, Blueprint, Pawn)\n"
-			+ "- Maintain consistency in technical concepts (Shader着色器, Asset资源, Animation动画, Physics物理等)\n"
-			+ "- Keep programming terms accurate (Variable变量, Function函数, Loop循环, Class类等)\n"
-			+ "- Preserve technical accuracy for game development concepts (Rigidbody刚体, Collider碰撞器, Transform变换, Material材质等)\n"
-			+ "- Use professional, precise Chinese terminology for game development\n";
-	}
-	
-	return "";  // general 类型不添加额外提示
-}
 
 // 内容类型：anime, scifi, disney, fantasy, drama, horror, gamedev, general
 string UserAgent = "PotPlayer/1.0";
@@ -160,7 +73,7 @@ uint g_lastTranslateTime = 0;  // 上次翻译时间，用于检测场景切换
 
 string ServerLogin(string User, string Pass)
 {
-	// User = API URL|Model|ContextCount|Genre, Pass = API Key
+	// User = API URL|Model|ContextCount|Genre|SceneThreshold|CustomPrompt, Pass = API Key
 	g_apiKey = Pass;
 	
 	// ===== 验证必不可少的参数 =====
@@ -795,6 +708,10 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	
 	// 构建请求体 - 使用当前上下文
 	string body = "{\"model\":\"" + g_model + "\",";
+	if (g_baseUrl == "https://ark.cn-beijing.volces.com/api/v3")
+	{
+		body += "\"reasoning_effort\":\"minimal\",";
+	}
 	body += "\"messages\":[";
 	body += "{\"role\":\"system\",\"content\":\"" + JsonEscape(prompt) + "\"},";
 	
