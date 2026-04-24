@@ -1,15 +1,15 @@
 # PotPlayer AI字幕翻译插件
 
-> **版本：v1.1.0** | **状态：Official Release** ✅
+> **版本：v1.1.3** | **状态：Official Release** ✅
 
 ## 📖 简介
 
 这是一套用于PotPlayer的AI字幕实时翻译插件，支持接入主流AI大模型API进行字幕翻译。
 
 **核心特性**：
-- 🤖 **多模型支持** - 支持OpenAI、DeepSeek、通义千问、Gemini等主流AI大模型
+- 🤖 **多模型支持** - 支持OpenAI、DeepSeek、通义千问、火山引擎、SiliconFlow等兼容API
 - 💬 **口语化翻译引擎** - 优先自然日常表达，强制使用口语粒子（啦/呀/呢/吧/嘛）
-- 🎯 **用户自定义提示词** ⭐ NEW - 革命性的个性化翻译控制，用户请求优先机制
+- 🎯 **用户自定义提示词**  - 革命性的个性化翻译控制，用户请求优先机制
 - 🎬 **8种内容类型适配** - anime、scifi、drama、horror等专业领域翻译优化
 - 📚 **智能上下文管理** - 自动判断是否需要历史信息，避免误导翻译
 - 🔍 **6步质量检查** - 包括平淡度、一致性、清晰度等完整质量评估
@@ -17,19 +17,11 @@
 - 💾 **完整缓存机制** - 避免重复调用，提升翻译效率
 - ⚙️ **灵活配置系统** - 支持上下文条数、场景阈值、内容类型等参数调整
 
-**v1.1 新功能亮点**：
-- ✅ **用户自定义提示词** - 在系统专业规则基础上追加个性化指导
-- ✅ **智能优先级处理** - 用户请求与系统规则智能结合，避免过度覆盖
-- ✅ **配置持久化增强** - 一次配置，永久使用，关闭软件后配置仍然有效
-- ✅ **向后兼容保障** - 不影响现有用户正常使用
+**v1.1.3 新功能亮点**：
+- 适配火山引擎、智谱厂商，现在火山和智谱能正常使用
+- 添加报错提示，
 
 
-
-## 📁 插件文件
-
-| 文件 | 说明 |
-|------|------|
-| `SubtitleTranslate - AI.as` | 通用版本，支持OpenAI、DeepSeek、通义千问等兼容OpenAI格式的API |
 
 ## 🚀 安装方法
 
@@ -59,22 +51,18 @@ API Key
 
 **参数说明**：
 - `URL` - API服务地址（**必填**）
-- `Model` - 模型名称（可选，省略时自动选择）
-- `ContextCount` - 上下文条数，0-20（可选，默认5）
+- `Model` - 模型名称（**必填**，不填写会直接报错）
+- `Context` - 上下文条数，0-20（可选，默认5）
 - `Genre` - 内容类型（可选，默认general）
-- `SceneThreshold` - 场景切换检测时间，1-60000ms（可选，默认6000ms）⭐ NEW
-- `CustomPrompt` - 用户自定义提示词（可选，会追加到系统提示词末尾）⭐ NEW
+- `SceneThreshold` - 场景切换检测时间，1-60000ms（可选，默认6000ms）
+- `CustomPrompt` - 用户自定义提示词（可选，会追加到系统提示词末尾）
 
-**重要提示**：必须保留所有 `|` 分隔符，省略参数时使用空位表示。
+**重要提示**：必须保留所有 `|` 分隔符。`Model` 为必填项，不能留空。
 
 **配置示例**：
 ```
 # 标准配置（动漫，5条上下文，6秒场景检测，自定义提示词）
 https://api.deepseek.com/v1|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
-sk-xxxxxxxxxxxxx
-
-# 最小配置（仅API地址和Key，其他参数使用默认值）
-https://api.deepseek.com/v1|||||
 sk-xxxxxxxxxxxxx
 
 # 快速翻译（无上下文，3秒场景检测，无自定义提示词）
@@ -85,10 +73,37 @@ sk-xxxxxxxxxxxxx
 https://api.deepseek.com/v1|deepseek-chat|10|scifi|8000|请使用专业科幻术语
 sk-xxxxxxxxxxxxx
 
-# 自定义风格（使用默认模型和上下文，自定义翻译风格）
-https://api.deepseek.com/v1||5|||请使用文言文风格，保持信达雅
+# 自定义风格（模型必填）
+https://api.deepseek.com/v1|deepseek-chat|5|||请使用文言文风格，保持信达雅
+sk-xxxxxxxxxxxxx
+
+# 火山引擎 Ark（自动附加 reasoning_effort=minimal）
+https://ark.cn-beijing.volces.com/api/v3|doubao-seed-1-6-250615|5|general|6000|
+sk-xxxxxxxxxxxxx
+
+# 智谱 BigModel（自动附加 thinking.type=disabled）
+https://open.bigmodel.cn/api/paas/v4|glm-5.1|5|general|6000|
+sk-xxxxxxxxxxxxx
+
+# 通义千问 DashScope 兼容模式（自动附加 enable_thinking=false）
+https://dashscope.aliyuncs.com/compatible-mode/v1|qwen-plus|5|general|6000|
+sk-xxxxxxxxxxxxx
+
+# SiliconFlow（自动附加 enable_thinking=false）
+https://api.siliconflow.cn/v1|Qwen/Qwen3-8B|5|general|6000|
 sk-xxxxxxxxxxxxx
 ```
+
+**厂商请求地址汇总**：
+- deepseek https://api.siliconflow.cn/v1
+- 阿里百炼  https://dashscope.aliyuncs.com/compatible-mode/v1
+- 智谱 https://open.bigmodel.cn/api/paas/v4 
+- 硅基流动 https://api.siliconflow.cn/v1
+- 火山引擎 https://ark.cn-beijing.volces.com/api/v3
+
+*插件全部都默认把思考模式关了，不然用不了*
+
+任何兼容OpenAI API格式的服务都可以使用，只需修改API地址即可。
 
 ### 方法二：直接修改插件代码
 
@@ -96,28 +111,9 @@ sk-xxxxxxxxxxxxx
 
 ```angelscript
 string g_apiKey = "你的API Key";
-string g_baseUrl = "https://api.deepseek.com/v1";  // 或其他API地址
+string g_baseUrl = "https://api.deepseek.com";  // 或其他API地址
+string g_model = "deepseek-chat";               // 必填，不可留空
 ```
-
-## 🔑 获取API Key
-
-### OpenAI
-1. 访问 https://platform.openai.com
-2. 注册/登录账户
-3. 在 API Keys 页面创建新的Key
-
-### DeepSeek（推荐，性价比高）
-1. 访问 https://platform.deepseek.com
-2. 注册账户并充值
-3. 在控制台获取API Key
-
-### 通义千问
-1. 访问 https://dashscope.aliyun.com
-2. 开通服务
-3. 获取API Key
-
-### 其他兼容服务
-任何兼容OpenAI API格式的服务都可以使用，只需修改API地址即可。
 
 ## 🎬 使用方法
 

@@ -18,7 +18,8 @@
 
 string GetTitle()
 {
-	return "{$CP936=AI大模型翻译}AI Translate";
+	return "{$CP936=AI大模型翻译$}"
+         + "{$CP0=AI Translate$}";
 }
 
 string GetVersion()
@@ -28,7 +29,7 @@ string GetVersion()
 
 string GetDesc()
 {
-	return "{$CP936=使用AI大模型进行字幕实时翻译(支持DeepSeek/OpenAI/通义千问/Gemini等)}Translate subtitles using AI (DeepSeek/OpenAI/Qwen/Gemini...)";
+	return "AI字幕实时翻译 Translate subtitles using AI";
 }
 
 string GetLoginTitle()
@@ -53,7 +54,7 @@ string GetPasswordText()
 // ============ 全局配置 ============
 string g_apiKey = "";
 string g_baseUrl = "";
-string g_model = "deepseek-chat";
+string g_model = "";
 string g_genre = "general";
 string g_customPrompt = "";  // 用户自定义提示词
 uint g_sceneChangeThreshold = 6000;  // 毫秒，场景切换阈值
@@ -80,13 +81,13 @@ string ServerLogin(string User, string Pass)
 	// 必须有API Key
 	if (Pass.length() == 0)
 	{
-		return "fail|{$CP936=错误: API Key不能为空}Error: API Key is required";
+		return "错误: API Key不能为空 Error:API Key is required";
 	}
 	
 	// 必须有URL
 	if (User.length() == 0)
 	{
-		return "fail|{$CP936=错误: URL不能为空}Error: URL is required";
+		return "错误: URL不能为空 Error: URL is required";
 	}
 	
 	// 分割字符串
@@ -95,7 +96,7 @@ string ServerLogin(string User, string Pass)
 	// 验证URL
 	if (parts.length() < 1 || parts[0].length() == 0)
 	{
-		return "fail|{$CP936=错误: URL不能为空}Error: URL is required";
+		return "错误: URL不能为空 Error: URL is required";
 	}
 	g_baseUrl = parts[0];
 	
@@ -108,17 +109,7 @@ string ServerLogin(string User, string Pass)
 	}
 	else
 	{
-		// 根据URL自动选择默认模型
-		if (g_baseUrl.findFirst("deepseek") >= 0)
-			g_model = "deepseek-chat";
-		else if (g_baseUrl.findFirst("openai") >= 0)
-			g_model = "gpt-3.5-turbo";
-		else if (g_baseUrl.findFirst("dashscope") >= 0 || g_baseUrl.findFirst("aliyun") >= 0)
-			g_model = "qwen-turbo";
-		else if (g_baseUrl.findFirst("googleapis") >= 0 || g_baseUrl.findFirst("gemini") >= 0)
-			g_model = "gemini-pro";
-		else
-			g_model = "gpt-3.5-turbo";
+		return "错误: Model不能为空 Error: Model is required";
 	}
 	
 	// 解析ContextCount（可选，有值时才验证）
@@ -131,7 +122,7 @@ string ServerLogin(string User, string Pass)
 		else
 		{
 			// 用户明确输入了无效值，才提示
-			return "fail|{$CP936=错误: Context必须是0-20之间的数字}Error: Context must be 0-20";
+			return "错误: Context必须是0-20之间的数字 Error: Context must be 0-20";
 		}
 	}
 	
@@ -150,7 +141,7 @@ string ServerLogin(string User, string Pass)
 		else
 		{
 			// 用户明确输入了无效值，才提示
-			return "fail|{$CP936=错误: Genre无效. 有效值: anime|western-comic|scifi|disney|fantasy|drama|horror|gamedev|general}Error: Invalid Genre";
+			return "错误: Genre无效. 有效值: anime|western-comic|scifi|disney|fantasy|drama|horror|gamedev|general Error: Invalid Genre";
 		}
 	}
 	
@@ -164,7 +155,7 @@ string ServerLogin(string User, string Pass)
 		else
 		{
 			// 用户明确输入了无效值，才提示
-			return "fail|{$CP936=错误: SceneThreshold必须是1-60000毫秒之间的数字}Error: SceneThreshold must be 1-60000 milliseconds";
+			return "错误: SceneThreshold必须是1-60000毫秒之间的数字 Error: SceneThreshold must be 1-60000 milliseconds";
 		}
 	}
 	
@@ -196,7 +187,7 @@ string ServerLogin(string User, string Pass)
 	HostPrintUTF8("SceneThreshold: " + g_sceneChangeThreshold + "ms\n");
 	HostPrintUTF8("CustomPrompt: " + (g_customPrompt.length() > 0 ? g_customPrompt : "(none)") + "\n");
 	
-	return "200 ok|{$CP936=配置成功! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms" + (g_customPrompt.length() > 0 ? " CustomPrompt:已设置" : "") + "}OK! Model:" + g_model + " Context:" + g_maxHistory + " Genre:" + g_genre + " Threshold:" + g_sceneChangeThreshold + "ms" + (g_customPrompt.length() > 0 ? " CustomPrompt:set" : "");
+	return "Model:" + g_model + "\nContext:" + g_maxHistory + "\nGenre:" + g_genre + "\nThreshold:" + g_sceneChangeThreshold + "ms" + (g_customPrompt.length() > 0 ? "\nCustomPrompt:已设置" : "");
 }
 
 void ServerLogout()
@@ -614,6 +605,8 @@ string GetGenreSpecificGuide(string genre)
 // ============ 核心翻译函数 ============
 string Translate(string Text, string &in SrcLang, string &in DstLang)
 {
+	string errorPrefix = "{$CP936=翻译失败: }AI Error: ";
+
 	// 从保存的配置加载
 	if (g_apiKey.length() == 0)
 	{
@@ -625,7 +618,13 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	}
 	if (g_model.length() == 0)
 	{
-		g_model = HostLoadString("AI_Trans_Model", "deepseek-chat");
+		g_model = HostLoadString("AI_Trans_Model", "");
+	}
+	if (g_model.length() == 0)
+	{
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "Model is required";
 	}
 	
 	// 加载历史记录条数配置
@@ -660,8 +659,18 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	g_customPrompt = HostLoadString("AI_Trans_CustomPrompt", "");
 	
 	// 检查配置
-	if (g_apiKey.length() == 0) return "";
-	if (Text.Trim().length() == 0) return "";
+	if (g_apiKey.length() == 0)
+	{
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "API Key is required";
+	}
+	if (Text.Trim().length() == 0)
+	{
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "Empty subtitle text";
+	}
 	
 	// 检测是否有场景切换
 	uint currentTime = HostGetTickCount();
@@ -712,6 +721,17 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	{
 		body += "\"reasoning_effort\":\"minimal\",";
 	}
+	else if (g_baseUrl == "https://open.bigmodel.cn/api/paas/v4"
+		||   g_baseUrl == "https://api.deepseek.com")
+	{
+		body += "\"thinking\":{\"type\":\"disabled\"},";
+	}
+	else if (g_baseUrl == "https://dashscope.aliyuncs.com/compatible-mode/v1"
+		||   g_baseUrl == "https://api.siliconflow.cn/v1")
+	{
+		body += "\"enable_thinking\":false,";
+	}
+	
 	body += "\"messages\":[";
 	body += "{\"role\":\"system\",\"content\":\"" + JsonEscape(prompt) + "\"},";
 	
@@ -721,7 +741,8 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	
 	// 添加当前要翻译的文本
 	body += "{\"role\":\"user\",\"content\":\"" + JsonEscape(Text) + "\"}";
-	body += "],\"temperature\":0.0618,\"max_tokens\":1000}";
+	body += "],\"temperature\":0.31,\"max_tokens\":1000,";   
+	body += "\"stream\":false}";
 	
 	// 构建URL
 	string url = g_baseUrl + "/chat/completions";
@@ -731,23 +752,51 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	// 发送请求
 	string response = HostUrlGetString(url, UserAgent, header, body);
 	
-	if (response.length() == 0) return "";
+	if (response.length() == 0)
+	{
+		HostPrintUTF8("API Error: Empty response from server\n");
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "Empty response from server";
+	}
 	
 	// 解析响应
 	JsonReader reader;
 	JsonValue root;
 	
-	if (!reader.parse(response, root)) return "";
+	if (!reader.parse(response, root))
+	{
+		string responsePreview = response;
+		if (responsePreview.length() > 160)
+		{
+			responsePreview = responsePreview.Left(160) + "...";
+		}
+		HostPrintUTF8("Parse Error: response is not valid JSON. Length=" + response.length() + "\n");
+		HostPrintUTF8("Raw Response:\n" + response + "\n");
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "Invalid JSON response: " + responsePreview;
+	}
 	
 	// 检查错误
 	if (!root["error"].isNull())
 	{
-		HostPrintUTF8("API Error: " + root["error"]["message"].asString() + "\n");
-		return "";
+		string apiErr = root["error"]["message"].asString();
+		if (apiErr.length() == 0) apiErr = "Unknown API error";
+		HostPrintUTF8("API Error: " + apiErr + "\n");
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + apiErr;
 	}
 	
-	JsonValue choices = root["choices"];
-	if (choices.isNull() || choices.size() == 0) return "";
+	JsonValue choices = root["choices"]; 
+	if (choices.isNull() || choices.size() == 0)
+	{
+		HostPrintUTF8("API Error: No choices in response\n");
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "No choices in API response";
+	}
 	
 	string result = choices[0]["message"]["content"].asString();
 	result = result.Trim();
