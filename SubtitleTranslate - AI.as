@@ -24,7 +24,7 @@ string GetTitle()
 
 string GetVersion()
 {
-	return "1.0";
+	return "1.1.3";
 }
 
 string GetDesc()
@@ -228,6 +228,7 @@ int FindInCache(string text)
 void AddToCache(string source, string target)
 {
 	if (FindInCache(source) >= 0) return;
+	if (target.Trim().length() == 0) return;
 	g_allSource.insertLast(source);
 	g_allTarget.insertLast(target);
 }
@@ -342,6 +343,20 @@ string GetLangName(string code)
 	if (code == "zh-CN") return "Simplified Chinese";
 	if (code == "zh-TW") return "Traditional Chinese";
 	return code;
+}
+
+bool IsTimeoutStatus(int statusCode)
+{
+	return statusCode == 408 || statusCode == 504 || statusCode == 522 || statusCode == 524;
+}
+
+bool IsTimeoutText(string text)
+{
+	string hit = HostRegExpParse(
+		text,
+		"([Tt][Ii][Mm][Ee][Oo][Uu][Tt]|[Tt][Ii][Mm][Ee][Dd][[:space:]]+[Oo][Uu][Tt]|[Rr][Ee][Qq][Uu][Ee][Ss][Tt][[:space:]]+[Tt][Ii][Mm][Ee][Dd][[:space:]]+[Oo][Uu][Tt]|[Cc][Oo][Nn][Nn][Ee][Cc][Tt].*[Tt][Ii][Mm][Ee][Oo][Uu][Tt]|超时)"
+	);
+	return hit.length() > 0;
 }
 
 // ============ 增强的提示词生成函数 ============
@@ -605,7 +620,7 @@ string GetGenreSpecificGuide(string genre)
 // ============ 核心翻译函数 ============
 string Translate(string Text, string &in SrcLang, string &in DstLang)
 {
-	string errorPrefix = "{$CP936=翻译失败: }AI Error: ";
+	string errorPrefix = "翻译失败: AI Error: ";
 
 	// 从保存的配置加载
 	if (g_apiKey.length() == 0)
@@ -614,7 +629,7 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	}
 	if (g_baseUrl.length() == 0)
 	{
-		g_baseUrl = HostLoadString("AI_Trans_Url", "https://api.deepseek.com");
+		g_baseUrl = HostLoadString("AI_Trans_Url", "");
 	}
 	if (g_model.length() == 0)
 	{
@@ -664,12 +679,6 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 		SrcLang = "UTF8";
 		DstLang = "UTF8";
 		return errorPrefix + "API Key is required";
-	}
-	if (Text.Trim().length() == 0)
-	{
-		SrcLang = "UTF8";
-		DstLang = "UTF8";
-		return errorPrefix + "Empty subtitle text";
 	}
 	
 	// 检测是否有场景切换
@@ -750,7 +759,23 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	string header = "Content-Type: application/json\r\nAuthorization: Bearer " + g_apiKey;
 	
 	// 发送请求
-	string response = HostUrlGetString(url, UserAgent, header, body);
+	int httpStatus = 0;
+	string response = "";
+	uintptr http = HostOpenHTTP(url, UserAgent, header, body);
+	if (http != 0)
+	{
+		httpStatus = HostGetStatusHTTP(http);
+		response = HostGetContentHTTP(http);
+		HostCloseHTTP(http);
+	}
+
+	if (IsTimeoutStatus(httpStatus))
+	{
+		HostPrintUTF8("API Timeout: HTTP status=" + httpStatus + "\n");
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "Request timeout";
+	}
 	
 	if (response.length() == 0)
 	{
@@ -758,6 +783,14 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 		SrcLang = "UTF8";
 		DstLang = "UTF8";
 		return errorPrefix + "Empty response from server";
+	}
+
+	if (IsTimeoutText(response))
+	{
+		HostPrintUTF8("API Timeout: timeout keyword detected in response\n");
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "Request timeout";
 	}
 	
 	// 解析响应
@@ -783,6 +816,13 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	{
 		string apiErr = root["error"]["message"].asString();
 		if (apiErr.length() == 0) apiErr = "Unknown API error";
+		if (IsTimeoutText(apiErr))
+		{
+			HostPrintUTF8("API Timeout: " + apiErr + "\n");
+			SrcLang = "UTF8";
+			DstLang = "UTF8";
+			return errorPrefix + "Request timeout";
+		}
 		HostPrintUTF8("API Error: " + apiErr + "\n");
 		SrcLang = "UTF8";
 		DstLang = "UTF8";
@@ -800,14 +840,18 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	
 	string result = choices[0]["message"]["content"].asString();
 	result = result.Trim();
+	if (result.length() == 0)
+	{
+		HostPrintUTF8("API Error: Empty translation content\n");
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "Empty translation content";
+	}
 	
 	// 保存到全量缓存和当前上下文
-	if (result.length() > 0)
-	{
-		AddToCache(Text, result);
-		AddToContext(Text, result);
-		g_lastIndex = int(g_allSource.length()) - 1;  // 更新为缓存末尾
-	}
+	AddToCache(Text, result);
+	AddToContext(Text, result);
+	g_lastIndex = int(g_allSource.length()) - 1;  // 更新为缓存末尾
 	
 	// 设置输出编码
 	SrcLang = "UTF8";

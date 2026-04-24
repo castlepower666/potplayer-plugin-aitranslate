@@ -19,7 +19,7 @@
 
 **v1.1.3 新功能亮点**：
 - 适配火山引擎、智谱厂商，现在火山和智谱能正常使用
-- 添加报错提示，
+- 添加报错提示，可以直接在字幕处观察到报错
 
 
 
@@ -62,19 +62,7 @@ API Key
 **配置示例**：
 ```
 # 标准配置（动漫，5条上下文，6秒场景检测，自定义提示词）
-https://api.deepseek.com/v1|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
-sk-xxxxxxxxxxxxx
-
-# 快速翻译（无上下文，3秒场景检测，无自定义提示词）
-https://api.deepseek.com/v1|deepseek-chat|0||3000|
-sk-xxxxxxxxxxxxx
-
-# 高质量（10条上下文，科幻题材，8秒场景检测，自定义提示词）
-https://api.deepseek.com/v1|deepseek-chat|10|scifi|8000|请使用专业科幻术语
-sk-xxxxxxxxxxxxx
-
-# 自定义风格（模型必填）
-https://api.deepseek.com/v1|deepseek-chat|5|||请使用文言文风格，保持信达雅
+https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
 sk-xxxxxxxxxxxxx
 
 # 火山引擎 Ark（自动附加 reasoning_effort=minimal）
@@ -95,15 +83,15 @@ sk-xxxxxxxxxxxxx
 ```
 
 **厂商请求地址汇总**：
-- deepseek https://api.siliconflow.cn/v1
+- deepseek https://api.deepseek.com
 - 阿里百炼  https://dashscope.aliyuncs.com/compatible-mode/v1
 - 智谱 https://open.bigmodel.cn/api/paas/v4 
 - 硅基流动 https://api.siliconflow.cn/v1
 - 火山引擎 https://ark.cn-beijing.volces.com/api/v3
 
-*插件全部都默认把思考模式关了，不然用不了*
+*插件把这些厂商的思考模式关了，不然用不了*
 
-任何兼容OpenAI API格式的服务都可以使用，只需修改API地址即可。
+任何兼容OpenAI API格式的服务都可以使用（请使用非思考模型），只需修改API地址即可。
 
 ### 方法二：直接修改插件代码
 
@@ -126,9 +114,9 @@ string g_model = "deepseek-chat";               // 必填，不可留空
 
 ## 🌍 支持的语言
 
-自动检测、简体中文、繁體中文、English、日本語、한국어、Français、Deutsch、Español、Italiano、Português、Русский、العربية、हिन्दी、ไทย
+自动检测、English、简体中文、繁體中文、日本語、한국어、Français、Deutsch、Español、Русский、Português、Italiano、العربية、ไทย、Tiếng Việt
 
-## 💡 提示词系统改进 ⭐ LATEST
+## 💡 提示词系统改进 
 
 ### 多语言英文提示词
 
@@ -145,7 +133,7 @@ string g_model = "deepseek-chat";               // 必填，不可留空
 1. **情感真实性检查** - 情感与原文是否一致？
 2. **一致性验证** - 角色语音、术语是否一致？
 3. **清晰度评估** - 表达是否清晰易懂？
-4. **平淡度检查** ⭐ NEW - 是否避免了平淡生硬的表达？
+4. **平淡度检查**  NEW - 是否避免了平淡生硬的表达？
 5. **文化适配验证** - 是否符合目标语言文化？
 6. **最终质量评分** - 综合评估翻译质量
 
@@ -170,55 +158,46 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 - **适用**：日本动画、日系漫画改编作品
 - **特点**：NATURAL DIALOGUE、CHARACTER DIFFERENTIATION、ACTION SCENES with power words
 - **关键原则**：角色对话要自然，不同角色有不同的说话风格
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|anime`
 
 #### 2. **western-comic**（欧美动画/漫画）
 - **适用**：美国漫画、欧美动画、好莱坞风格内容
 - **特点**：HUMOR LANDS（笑点必须好笑）、CASUAL LANGUAGE（粗俗/俚语可用）、ONE-LINERS（简洁有力）
 - **关键原则**：笑点落地，讽刺明显，动感十足
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|western-comic`
 
 #### 3. **scifi**（科幻）
 - **适用**：科幻电影、未来题材
 - **特点**：CONSISTENT JARGON（术语一致）、FUTURISTIC FEEL（未来感）、SIMPLIFY COMPLEX（简化复杂概念）
 - **关键原则**：术语必须一致，解释技术的用途和意义
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|8|scifi`（建议用8条上下文）
 
 #### 4. **disney**（迪士尼）
 - **适用**：儿童电影、家庭内容
 - **特点**：WARMTH IS PRIMARY（亲切感）、GENTLE WORD CHOICE（包容感）、LAUGHTER IS KINDNESS（善良的幽默）
 - **关键原则**：温暖、积极、充满希望，不是被教育而是被吸引
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|disney`
 
 #### 5. **fantasy**（奇幻）⭐ ENHANCED
 - **适用**：魔幻剧集、冒险故事
 - **特点**：史诗感，奇幻术语（魔法、精灵、龙），宏大英勇
 - **关键原则**：保留世界观一致性，术语翻译统一
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|fantasy`
 
 #### 6. **drama**（剧情）
 - **适用**：电视剧、现代故事
 - **特点**：DIALOGUE AUTHENTICITY（真实对白）、SUBTEXT IS KEY（潜台词）、COLLOQUIAL EXTREME（极度口语）
 - **关键原则**：自然、细腻、有感情，对话要真实可信
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|3|drama`
 
 #### 7. **horror**（恐怖）
 - **适用**：恐怖电影、惊悚内容
 - **特点**：ATMOSPHERE OVER PLOT（气氛比情节重要）、SHORT SENTENCES（短句制造紧张）、COLD THREATS（冷酷威胁）
 - **关键原则**：压抑、诡异、很有张力，不靠吓而靠造势
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|horror`
 
 #### 8. **gamedev**（游戏开发教程）
 - **适用**：Unity、Unreal Engine 等游戏开发教程
 - **特点**：TERMINOLOGY PRECISION（术语精准）、PROGRESSION（循序渐进）、HONEST BUT SUPPORTIVE（坦诚但鼓励）
 - **关键原则**：清楚、鼓励、实用，像朋友在教你代码
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|gamedev`
 
 #### 9. **general**（通用，默认）
 - **适用**：不确定的内容
 - **特点**：DIALOGUE FIRST（优先自然对白）、MEANING NOT WORDS（意思而非字对字）、CHARACTER VOICE（保持人物个性）
 - **关键原则**：自然、真实、好听，如果听起来好就是对的
-- **推荐**：`https://api.deepseek.com/v1|deepseek-chat|5|general`
 
 ### 翻译效果对比示例
 
@@ -245,8 +224,7 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 
 ### Genre 使用注意事项
 
-- Genre 参数完全可选，不设置时默认为 `general`
-- 无效的 Genre 会自动回退到 `general`，不会导致错误
+- 无效的 Genre 会直接报错，请使用有效值：`anime|western-comic|scifi|disney|fantasy|drama|horror|gamedev|general`
 - 添加 Genre 会增加约 5-10% 的 API 成本（因为 Prompt 变长）
 - 更改 Genre 无需重启，重新登录新配置即可生效
 
@@ -258,7 +236,7 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 - **8-10条**：长对话场景，更好的连贯性（增加API成本）
 - **15+条**：超长对话序列（高成本）
 
-### 场景切换阈值建议 ⭐ NEW
+### 场景切换阈值建议 
 
 | SceneThreshold | 适用场景 | 特点 |
 |---|---|---|
@@ -274,7 +252,7 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 - 高质量剧情：`|deepseek-chat|8|drama|10000` (8条上下文，10秒检测)
 - 教学视频：`|deepseek-chat|5|gamedev|15000` (5条上下文，15秒检测)
 
-## 🎯 用户自定义提示词功能 ⭐ NEW
+## 🎯 用户自定义提示词功能 
 
 ### 功能概述
 
@@ -287,33 +265,6 @@ Genre 是一个可选参数，根据内容类型自动调整翻译风格。8种�
 URL|Model|Context|Genre|SceneThreshold|CustomPrompt
 ```
 
-**示例**：
-```
-https://api.deepseek.com/v1|deepseek-chat|5|anime|6000|请使用文言文风格翻译
-```
-
-### 使用场景示例
-
-#### 文言文风格翻译
-```
-https://api.deepseek.com/v1|deepseek-chat|5|general|6000|请使用文言文风格翻译，保持信达雅
-```
-
-#### 学术风格翻译
-```
-https://api.deepseek.com/v1|deepseek-chat|5|general|6000|使用正式学术用语，避免口语化表达
-```
-
-#### 儿童内容翻译
-```
-https://api.deepseek.com/v1|deepseek-chat|5|disney|6000|翻译成简单易懂的语言，适合儿童阅读
-```
-
-#### 保留原味翻译
-```
-https://api.deepseek.com/v1|deepseek-chat|5|general|6000|尽量保留原文的语调和情感，不要过于正式
-```
-
 ### 技术实现
 
 #### 提示词构建流程
@@ -322,7 +273,7 @@ https://api.deepseek.com/v1|deepseek-chat|5|general|6000|尽量保留原文的�
 3. **用户自定义提示词** - 在末尾追加个性化指导
 4. **完整提示词** - 发送给 AI 模型
 
-#### 优先级处理机制 ⭐ NEW
+#### 优先级处理机制
 系统采用智能优先级处理机制，确保用户需求与系统规则的最佳结合：
 
 **冲突处理原则**：
@@ -347,7 +298,7 @@ Otherwise, combine both system rules and user preferences.
 ```
 
 
-## 💬 口语化翻译原则 ⭐ NEW
+## 💬 口语化翻译原则
 
 插件优先使用自然、日常的中文表达，而不是生硬的文言文。
 
@@ -395,7 +346,7 @@ Otherwise, combine both system rules and user preferences.
 ❌ 反例：该事物乃卓越不凡。
 ```
 
-## 🎭 俚语与成语处理 ⭐ NEW
+## 🎭 俚语与成语处理
 
 ### 俚语识别系统
 
@@ -445,7 +396,7 @@ Otherwise, combine both system rules and user preferences.
 ✅ 翻译：生活给你酸柠檬，就把它做成柠檬茶！
 ```
 
-## 🌍 多语言文化适配 ⭐ NEW
+## 🌍 多语言文化适配 
 
 系统根据源语言自动调整文化背景，确保翻译符合该文化的表达习惯。
 
@@ -507,7 +458,7 @@ Otherwise, combine both system rules and user preferences.
 ✅ 翻译：这太精妙绝伦了！(诗意表达)
 ```
 
-## 🔍 上下文智能判断系统 ⭐ NEW
+## 🔍 上下文智能判断系统
 
 ### 工作原理
 
@@ -542,7 +493,7 @@ Otherwise, combine both system rules and user preferences.
 - **独立场景** → 使用 0-2 条上下文
 - **文艺作品** → 使用 3-5 条上下文（保持节奏）
 
-## 🔍 AI自检机制 ⭐ NEW
+## 🔍 AI自检机制
 
 ### 自检项目
 
@@ -623,7 +574,7 @@ A:
 A: Genre 帮助AI理解内容类型，使用更合适的术语和表达方式。例如看动漫时用 `anime`，看科幻时用 `scifi`，看游戏开发教程时用 `gamedev`，翻译质量会更好。
 
 ### Q: Genre 拼错了会怎样？
-A: 无效的 Genre 会自动回退到 `general`，不会导致错误。
+A: 无效的 Genre 会直接报错，请检查并改为有效值：`anime|western-comic|scifi|disney|fantasy|drama|horror|gamedev|general`。
 
 ### Q: 如何快速切换 Genre？
 A: 重新登录时输入新的 Genre 参数即可，无需重启软件。
@@ -650,35 +601,12 @@ A: AI 会基于以下因素判断：对话连贯性、时间间隔（通过 Scen
 ### Q: 是否支持自定义俚语库？ ⭐ NEW
 A: 目前暂不支持直接自定义俚语库，但可以通过提高 ContextCount 和选择合适的 Genre 来改善俚语翻译。未来可能添加自定义俚语库功能。
 
-## 📊 性能和成本分析
-
-### API 成本影响
-
-**Prompt 长度变化**：
-- 基础 Prompt：约 300 字符，50-60 tokens
-- + Genre 提示词：额外 200-250 字符，30-40 tokens
-- 总计：约 500-550 字符，80-100 tokens
-
-**月度成本估算**（日均 100 条字幕翻译）：
-- 仅使用 general：约 150,000 tokens/月
-- 使用具体 Genre：约 250,000 tokens/月
-- 成本增幅：约 60-70%
-
 ### 成本优化建议
 
 - 成本敏感：使用 general 或较少上下文
 - 质量优先：选择准确的 Genre + 足量上下文
 - 平衡方案：选择 Genre + 中等上下文（5条）
 
-## 📚 技术说明
-
-### 核心架构
-
-**插件特性**：
-1. **上下文管理** - 维护最近N条翻译历史，用于AI理解连贯性
-2. **完整缓存** - 缓存所有翻译过的字幕，避免重复调用API
-3. **场景检测** - 6秒无新字幕自动清空历史（检测场景切换）
-4. **Genre提示词** - 根据内容类型动态生成特定翻译指引
 
 ### 配置持久化
 
@@ -689,24 +617,6 @@ A: 目前暂不支持直接自定义俚语库，但可以通过提高 ContextCou
 - 上下文条数（`AI_Trans_History`）
 - 内容类型（`AI_Trans_Genre`）
 
-## 🚀 快速开始
-
-### 1分钟快速配置
-
-```bash
-# Step 1: 复制插件文件到 PotPlayer
-# PotPlayer安装目录\Extension\Subtitle\Translate\SubtitleTranslate - AI.as
-
-# Step 2: 重启 PotPlayer
-
-# Step 3: 在字幕翻译设置中输入
-# 配置：https://api.deepseek.com/v1|deepseek-chat|5|anime
-# Key：sk-xxxxxxxxxxxxx
-
-# Step 4: 选择字幕，翻译开始！
-```
-
-
 
 ### 注意事项
 
@@ -715,21 +625,6 @@ A: 目前暂不支持直接自定义俚语库，但可以通过提高 ContextCou
 3. **效果验证** - 建议先测试小段文字验证翻译效果
 4. **参数顺序** - 必须按照固定顺序填写参数
 
-### 配置示例大全
-
-```
-# 标准配置 + 自定义提示词
-https://api.deepseek.com/v1|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
-
-# 仅设置自定义提示词（其他参数使用默认值）
-https://api.deepseek.com/v1|||||请使用文言文风格，保持信达雅
-
-# 快速翻译 + 简洁风格指导
-https://api.deepseek.com/v1|deepseek-chat|0||3000|翻译要简洁明了，避免冗长
-
-# 高质量翻译 + 专业术语指导
-https://api.deepseek.com/v1|deepseek-chat|10|scifi|8000|请使用专业科幻术语，保持技术准确性
-```
 ## 📝 开发说明
 
 插件基于AngelScript开发，主要函数：
@@ -746,16 +641,9 @@ https://api.deepseek.com/v1|deepseek-chat|10|scifi|8000|请使用专业科幻术
 
 MIT License - 可自由使用和修改
 
-## 🔗 相关链接
-
-- [PotPlayer官网](https://potplayer.daum.net)
-- [AngelScript文档](http://www.angelcode.com/angelscript/)
-- [OpenAI API文档](https://platform.openai.com/docs)
-- [DeepSeek API文档](https://platform.deepseek.com/api-docs)
-
 ---
 
-**最后更新**：2026年1月  
+**最后更新**：2026年4月  
 **维护者**：castlepower666  
 **协作**：GitHub Copilot  
 **状态**：Production Ready ✅
@@ -772,127 +660,17 @@ MIT License - 可自由使用和修改
 | 场景检测 | ✅ | 1.0+ | 可配置 1-60000ms |
 | Genre 分类 | ✅ | 1.0+ | 9 种内容类型 |
 | 完整缓存 | ✅ | 1.0+ | 避免重复调用 |
-| **口语化翻译** | ✅ | 1.0+ | 日常自然表达 ⭐ |
-| **俚语识别** | ✅ | 1.0+ | 15+ 成语库 + 预检查 ⭐ |
-| **文化适配** | ✅ | 1.0+ | 4种语言文化背景 ⭐ |
-| **上下文智能** | ✅ | 1.0+ | 自动判断相关性 ⭐ |
-| **AI自检** | ✅ | 1.0+ | 5项质量检查 ⭐ |
-
----
-
-## 🗺️ 产品路线图
-
-### v1.1a - 质量优化版 🔧  
-**投入**：2,500 tokens
-
-- 🔄 **自我修正机制** (1,000 tokens)
-   - AI翻译后运行质量自检（自然度/一致性/时态/代词指向）并在必要时触发修正或二次简要调用
-   - 包含示例检查：词性搭配、时态一致、代词指向
-   - 音韵流畅性检查：确保语句朗读顺畅、节奏与韵律自然，能押韵就押韵
-   - 预期质量提升：+3-5%
-
-- 🛡️ **错误防护库** (1,000 tokens)
-   - 输入校验（长度、控制字符、敏感词过滤）、输出校验（空翻、格式异常、明显偏离原意）
-   - 常见错误清单与避免规则（过度翻译、欠翻译、文化冒犯、过度本地化、代词混淆）
-   - 降级策略：返回缓存译文或原文并记录日志以便回滚
-   - 预期稳定性：+99.5%
-
-- 📊 **高级上下文分析** (500 tokens)
-   - 在 system prompt 中加入上下文关联判定流程（先评估再使用）：情绪/主角/关键词/叙事连续性
-   - 本地加入简单相似度阈值（决定是否把缓存作为上下文上送）
-   - 预期质量提升：+1-2%
-
-### v1.1b - 功能扩展版 🚀
-**投入**：2,500 tokens
-
-- 📚 **内置习语库扩展** (1,500 tokens)
-   - 将示例集合从 15+ 扩展到 ~50 条核心俚语（后期可扩展到 100），并整理多语言对应
-   - 将俚语库独立为可维护的配置/JSON，按需加载到提示词中
-   - 预期质量提升：+5%
-
-- 🎯 **特殊内容处理** (1,000 tokens)
-   - **歌词翻译模式**：优先韵脚对齐、节奏与音乐性，保持情感冲击力
-      - 示例提示：
-         ```
-         ===IF CONTEXT INDICATES LYRICS===
-         - Prioritize rhyme and flow over literal meaning
-         - Keep syllable count similar
-         - Maintain emotional impact
-         - Preserve punchlines
-         ```
-   - **诗词/散文**：保留意象与文学感，注意节奏感与意境而非逐字直译
-   - **技术文档**：保留术语精准、逻辑清晰与信息完整性（可启用 gamedev/tech 模式）
-   - **新闻/播报**：信息优先、表达中立简洁、避免情绪化改写
-   - **幽默/冷笑话**：保留笑点与反差，维护节奏以免破坏笑效
-   - 预期针对性提升：+10-20%
-
-上下文分析示例片段（将加入系统提示词）：
-```
-=== CONTEXT ANALYSIS ===
-For each context item, identify:
-1. Main character(s)
-2. Emotional tone (angry/happy/sad/neutral)
-3. Key concepts/terms
-4. Relationship between characters
-5. Narrative continuity
-
-When translating current line:
-- Maintain emotional thread
-- Use same terminology for same concepts
-- Match character relationship dynamics
-- Preserve narrative pacing
-```
-
-错误防护举例（将加入错误防护库与提示词）：
-```
-DON'T EVER:
-- ❌ Translate 'OK' as '好的' when character agrees reluctantly (use '行吧' instead)
-- ❌ Translate 'I'm fine' as '我很好' when character is depressed (use '我没事' or '我还活着')
-- ❌ Add explanation not in original (subtitles have limited time)
-- ❌ Make jokes more 'funny' than original (keep same impact level)
-```
-
----
-
-## 💰 Token 预算规划
-
-```
-总容量：64,000 tokens (DeepSeek 模型)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-已发布版本：
-  v1.0.0：2,500 tokens ✅ 已使用
-  v1.1.0：2,575 tokens ✅ 已发布 (+75 tokens)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-用户自定义提示词影响：
-  固定增加：55 tokens (优先级说明)
-  用户自定义：15-70 tokens (根据内容)
-  总增加：70-125 tokens (约 3-5%)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-规划中版本：
-  v1.2：2,600 tokens (质量优化)
-  v1.3：2,700 tokens (功能扩展)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-小计：7,875 tokens (已用+规划)
-剩余预算：56,125 tokens
-
-安全阈值：总使用 < 30,000 tokens (避免幻觉风险)
-充裕度：充足，可持续优化到 v3.0## 📖 简介
-
-**v1.1.0 Token 增加说明**：
-- 用户自定义提示词功能增加约 **75 tokens**（固定部分）
-- 用户自定义内容额外增加 **15-70 tokens**（根据输入长度）
-- 总增加控制在 **3-5%** 范围内，性价比极高
-- 个性化翻译控制价值远超微小成本增加
+| 口语化翻译 | ✅ | 1.0+ | 日常自然表达  |
+| 俚语识别** | ✅ | 1.0+ | 15+ 成语库 + 预检查  |
+| 文化适配** | ✅ | 1.0+ | 4种语言文化背景  |
+| 上下文智能 | ✅ | 1.0+ | 自动判断相关性 |
+| AI自检 | ✅ | 1.0+ | 5项质量检查  |
 
 ---
 
 ## 📈 版本历史
 
-### v1.1.0 - User Custom Prompts ⭐ NEW
+### v1.1.0 - User Custom Prompts 
 **最新发布版本（个性化翻译控制）**
 
 - ✅ **用户自定义提示词功能** - 革命性的个性化翻译控制
