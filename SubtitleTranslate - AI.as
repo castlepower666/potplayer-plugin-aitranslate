@@ -1,6 +1,9 @@
 /*
-	PotPlayer 字幕实时翻译插件 - AI大模型版本
-	支持: OpenAI, DeepSeek, 通义千问等兼容API
+PotPlayer 字幕实时翻译插件 - AI大模型版本
+版本：1.1.3
+支持: OpenAI、DeepSeek、通义千问、火山引擎、硅基流动、阿里云等兼容API
+项目地址：https://github.com/castlepower666/potplayer-plugin-aitranslate
+参数配置：URL|Model|Context|Genre|SceneThreshold|CustomPrompt
 */
 
 // string GetTitle()                     -> get title for UI
@@ -39,11 +42,11 @@ string GetLoginTitle()
 
 string GetLoginDesc()
 {
-		return "URL|Model|Context|Genre|SceneThreshold|CustomPrompt\n";
+		return "URL|Model|Context|Genre|Threshold|CustomPrompt\n";
 }
 string GetUserText()
 {
-	return "URL|Model|Context:";
+	return "Parameter:";
 }
 
 string GetPasswordText()
