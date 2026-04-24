@@ -631,6 +631,12 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	{
 		g_baseUrl = HostLoadString("AI_Trans_Url", "");
 	}
+	if (g_baseUrl.length() == 0)
+	{
+		SrcLang = "UTF8";
+		DstLang = "UTF8";
+		return errorPrefix + "URL is required";
+	}
 	if (g_model.length() == 0)
 	{
 		g_model = HostLoadString("AI_Trans_Model", "");
@@ -703,7 +709,6 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	
 	// 在缓存中查找当前文本
 	int cacheIndex = FindInCache(Text);
-	int cacheSize = int(g_allSource.length());
 	
 	// ====== 后退/回看场景：在缓存中找到了 ======
 	if (cacheIndex >= 0)
@@ -785,14 +790,6 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 		return errorPrefix + "Empty response from server";
 	}
 
-	if (IsTimeoutText(response))
-	{
-		HostPrintUTF8("API Timeout: timeout keyword detected in response\n");
-		SrcLang = "UTF8";
-		DstLang = "UTF8";
-		return errorPrefix + "Request timeout";
-	}
-	
 	// 解析响应
 	JsonReader reader;
 	JsonValue root;
@@ -854,7 +851,7 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	g_lastIndex = int(g_allSource.length()) - 1;  // 更新为缓存末尾
 	
 	// 设置输出编码
-	SrcLang = "UTF8";
+	SrcLang = "UTF8"; 
 	DstLang = "UTF8";
 	
 	return result;

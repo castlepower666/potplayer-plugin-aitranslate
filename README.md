@@ -18,9 +18,18 @@
 - ⚙️ **灵活配置系统** - 支持上下文条数、场景阈值、内容类型等参数调整
 
 **v1.1.3 新功能亮点**：
-- 适配火山引擎、智谱厂商，现在火山和智谱能正常使用
-- 添加报错提示，可以直接在字幕处观察到报错
+- 适配火山引擎、智谱厂商，现在火山和智谱能正常使用；适配deepseek新版的api
+- 添加报错提示，可以直接在字幕处观察到报错，不会再手足无措了
 
+**感谢b站网友[BAB3L](https://space.bilibili.com/90462124?spm_id_from=333.40164.0.0)的提议与支持**
+
+BAB3L提议将播放视频的文件名加入提示词，这个功能应该会很有用。
+![alt text](image.png)
+并向potplayer作者请求相关的api开放，作者答应在下一个版本提供相关的api。
+
+BAB3L还帮忙制作了插件的图标，非常感谢！
+
+这里也预告一下，下一个版本出来之后，插件也会跟进，加入这个功能。
 
 
 ## 🚀 安装方法
@@ -65,7 +74,7 @@ API Key
 https://api.deepseek.com|deepseek-chat|5|anime|6000|请使用更口语化的表达，加入更多网络流行语
 sk-xxxxxxxxxxxxx
 
-# 火山引擎 Ark（自动附加 reasoning_effort=minimal）
+# 火山引擎 Ark（自动附加 reasoning_effort=minimal，意思是关闭思考模式，下同）
 https://ark.cn-beijing.volces.com/api/v3|doubao-seed-1-6-250615|5|general|6000|
 sk-xxxxxxxxxxxxx
 
