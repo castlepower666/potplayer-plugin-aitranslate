@@ -1,9 +1,11 @@
 /*
 PotPlayer 字幕实时翻译插件 - AI大模型版本
-版本：1.1.3
+版本：1.2.0
+最后修改：2026-07-23
+新增：视频背景自动生成（VideoBgEnabled开关）、文件名检测API适配
 支持: OpenAI、DeepSeek、通义千问、火山引擎、硅基流动、阿里云等兼容API
 项目地址：https://github.com/castlepower666/potplayer-plugin-aitranslate
-参数配置：URL|Model|Context|Genre|SceneThreshold|CustomPrompt
+参数配置：URL|Model|Context|Genre|SceneThreshold|VideoBgEnabled|CustomPrompt
 */
 
 // string GetTitle()                     -> get title for UI
@@ -27,7 +29,7 @@ string GetTitle()
 
 string GetVersion()
 {
-	return "1.1.3";
+	return "1.2.0";
 }
 
 string GetDesc()
@@ -42,7 +44,7 @@ string GetLoginTitle()
 
 string GetLoginDesc()
 {
-		return "URL|Model|Context|Genre|Threshold|CustomPrompt\n";
+		return "URL|Model|Context|Genre|Threshold|VideoBg(Y/N)|CustomPrompt\n";
 }
 string GetUserText()
 {
@@ -74,6 +76,12 @@ int g_lastIndex = -1;  // 上次访问的缓存索引，用于检测快进/后�
 array<string> g_contextSource;  // 当前连续上下文原文
 array<string> g_contextTarget;  // 当前连续上下文译文
 uint g_lastTranslateTime = 0;  // 上次翻译时间，用于检测场景切换
+
+// ============ 视频背景上下文（根据文件名由AI生成） ============
+bool g_videoBgEnabled = false;         // 是否启用视频背景功能（Y/N），默认关闭
+string g_currentFileName = "";       // 当前播放的文件名，用于检测视频切换
+string g_videoBackground = "";       // AI生成的视频背景提示词
+bool g_videoBackgroundReady = false; // 背景是否已生成
 
 string ServerLogin(string User, string Pass)
 {
@@ -162,11 +170,26 @@ string ServerLogin(string User, string Pass)
 		}
 	}
 	
-	// 解析CustomPrompt（可选，有值时才读取）
-	g_customPrompt = "";  // 默认无自定义提示词
+	// 解析VideoBgEnabled（可选，Y/N）
+	g_videoBgEnabled = false;  // 默认关闭（新功能）
 	if (parts.length() >= 6 && parts[5].length() > 0)
 	{
-		g_customPrompt = parts[5];
+		string bgInput = parts[5];
+		if (bgInput == "Y" || bgInput == "y" || bgInput == "yes" || bgInput == "YES")
+			g_videoBgEnabled = true;
+		else if (bgInput == "N" || bgInput == "n" || bgInput == "no" || bgInput == "NO")
+			g_videoBgEnabled = false;
+		else
+		{
+			return "错误: VideoBgEnabled必须是Y或N Error: VideoBgEnabled must be Y or N";
+		}
+	}
+	
+	// 解析CustomPrompt（可选，有值时才读取）
+	g_customPrompt = "";  // 默认无自定义提示词
+	if (parts.length() >= 7 && parts[6].length() > 0)
+	{
+		g_customPrompt = parts[6];
 	}
 	
 	// 去除末尾斜杠
@@ -179,8 +202,43 @@ string ServerLogin(string User, string Pass)
 	HostSaveString("AI_Trans_History", "" + g_maxHistory);
 	HostSaveString("AI_Trans_Genre", g_genre);
 	HostSaveString("AI_Trans_SceneThreshold", "" + g_sceneChangeThreshold);
+	HostSaveString("AI_Trans_VideoBgEnabled", g_videoBgEnabled ? "Y" : "N");
 	HostSaveString("AI_Trans_CustomPrompt", g_customPrompt);
 	
+	// ===== 首次生成视频背景上下文（仅在配置或视频变化时触发） =====
+	if (g_videoBgEnabled)
+	{
+		string initFileName = HostGetPlayingFileName();
+		// 检查是否有变化：视频变了 或 背景还没生成过
+		bool needRegenerate = (initFileName.length() > 0 && initFileName != g_currentFileName)
+		                   || !g_videoBackgroundReady;
+		
+		if (initFileName.length() > 0 && needRegenerate)
+		{
+			HostPrintUTF8("[VideoContext] Initial generation for: " + initFileName + "\n");
+			g_videoBackground = GenerateVideoContext(initFileName);
+			if (g_videoBackground.length() > 0)
+			{
+				g_currentFileName = initFileName;
+				g_videoBackgroundReady = true;
+				HostPrintUTF8("[VideoContext] Background ready\n");
+			}
+			else
+			{
+				HostPrintUTF8("[VideoContext] Initial generation failed, will retry on first subtitle\n");
+			}
+		}
+		else if (g_videoBackgroundReady)
+		{
+			HostPrintUTF8("[VideoContext] Config unchanged, reusing existing background\n");
+		}
+	}
+	else
+	{
+		HostPrintUTF8("[VideoContext] Feature disabled by user\n");
+	}
+	// ===== END =====
+
 	// 打印调试信息到控制台
 	HostPrintUTF8("=== AI Translator Config Loaded ===\n");
 	HostPrintUTF8("URL: " + g_baseUrl + "\n");
@@ -188,9 +246,10 @@ string ServerLogin(string User, string Pass)
 	HostPrintUTF8("Context: " + g_maxHistory + "\n");
 	HostPrintUTF8("Genre: " + g_genre + "\n");
 	HostPrintUTF8("SceneThreshold: " + g_sceneChangeThreshold + "ms\n");
+	HostPrintUTF8("VideoBgEnabled: " + (g_videoBgEnabled ? "Y" : "N") + "\n");
 	HostPrintUTF8("CustomPrompt: " + (g_customPrompt.length() > 0 ? g_customPrompt : "(none)") + "\n");
 	
-	return "Model:" + g_model + "\nContext:" + g_maxHistory + "\nGenre:" + g_genre + "\nThreshold:" + g_sceneChangeThreshold + "ms" + (g_customPrompt.length() > 0 ? "\nCustomPrompt:已设置" : "");
+	return "Model:" + g_model + "\nContext:" + g_maxHistory + "\nGenre:" + g_genre + "\nThreshold:" + g_sceneChangeThreshold + "ms" + "\nVideoBg:" + (g_videoBgEnabled ? "Y" : "N") + (g_customPrompt.length() > 0 ? "\nCustomPrompt:已设置" : "");
 }
 
 void ServerLogout()
@@ -362,6 +421,99 @@ bool IsTimeoutText(string text)
 	return hit.length() > 0;
 }
 
+// ============ 视频背景上下文生成 ============
+string GenerateVideoContext(string fileName)
+{
+	// 去除文件扩展名，提取纯名称
+	string pureName = fileName;
+	int dotPos = pureName.findLast(".");
+	if (dotPos >= 0)
+	{
+		pureName = pureName.Left(uint(dotPos));
+	}
+	
+	// 构建请求：让AI根据文件名生成视频背景 + 通用翻译建议（不指定具体语言对）
+	string prompt = "Based on this video filename: \"" + JsonEscape(pureName) + "\", "
+		+ "describe: 1) What this video is (title, genre, themes, setting). "
+		+ "2) General subtitling tips for this content: recommended tone (formal/casual/poetic/etc), "
+		+ "common terminology to expect, cultural references to be aware of. "
+		+ "IMPORTANT: Do NOT mention any specific source or target language (e.g. do not say 'translate from English to Chinese'). "
+		+ "Keep it concise (under 100 words). Write in English. Output format: \"[VideoContext]...\"";
+	
+	// 构建API请求体（复用Translate中的厂商适配逻辑）
+	string body = "{\"model\":\"" + g_model + "\",";
+	if (g_baseUrl == "https://ark.cn-beijing.volces.com/api/v3")
+	{
+		body += "\"reasoning_effort\":\"minimal\",";
+	}
+	else if (g_baseUrl == "https://open.bigmodel.cn/api/paas/v4"
+		||   g_baseUrl == "https://api.deepseek.com")
+	{
+		body += "\"thinking\":{\"type\":\"disabled\"},";
+	}
+	else if (g_baseUrl == "https://dashscope.aliyuncs.com/compatible-mode/v1"
+		||   g_baseUrl == "https://api.siliconflow.cn/v1")
+	{
+		body += "\"enable_thinking\":false,";
+	}
+	
+	body += "\"messages\":[";
+	body += "{\"role\":\"system\",\"content\":\"You are a media analyst. Provide concise background and general subtitling guidance. Do NOT mention specific source/target languages.\"},";
+	body += "{\"role\":\"user\",\"content\":\"" + JsonEscape(prompt) + "\"}";
+	body += "],\"temperature\":0.7,\"max_tokens\":250,\"stream\":false}";
+	
+	// 构建URL
+	string url = g_baseUrl + "/chat/completions";
+	string header = "Content-Type: application/json\r\nAuthorization: Bearer " + g_apiKey;
+	
+	// 发送请求
+	int httpStatus = 0;
+	string response = "";
+	uintptr http = HostOpenHTTP(url, UserAgent, header, body);
+	if (http != 0)
+	{
+		httpStatus = HostGetStatusHTTP(http);
+		response = HostGetContentHTTP(http);
+		HostCloseHTTP(http);
+	}
+	
+	if (httpStatus != 200 || response.length() == 0)
+	{
+		HostPrintUTF8("[VideoContext] Request failed, HTTP status=" + httpStatus + "\n");
+		return "";
+	}
+	
+	// 解析响应
+	JsonReader reader;
+	JsonValue root;
+	
+	if (!reader.parse(response, root))
+	{
+		HostPrintUTF8("[VideoContext] JSON parse failed\n");
+		return "";
+	}
+	
+	if (!root["error"].isNull())
+	{
+		HostPrintUTF8("[VideoContext] API error: " + root["error"]["message"].asString() + "\n");
+		return "";
+	}
+	
+	JsonValue choices = root["choices"];
+	if (choices.isNull() || choices.size() == 0)
+	{
+		HostPrintUTF8("[VideoContext] No choices in response\n");
+		return "";
+	}
+	
+	string result = choices[0]["message"]["content"].asString();
+	result = result.Trim();
+	
+	HostPrintUTF8("[VideoContext] Generated: " + result + "\n");
+	
+	return result;
+}
+
 // ============ 增强的提示词生成函数 ============
 string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, int contextLen)
 {
@@ -497,6 +649,13 @@ string BuildEnhancedPrompt(string Text, string &in SrcLang, string &in DstLang, 
 		prompt += "Tu/Vous → 你(casual)/您(formal)\n";
 		prompt += "Match elegance with poetic Chinese where appropriate\n";
 		prompt += "Preserve romantic and subtle subtext\n\n";
+	}
+	
+	// === 视频背景上下文（AI根据文件名自动生成） ===
+	if (g_videoBackgroundReady && g_videoBackground.length() > 0)
+	{
+		prompt += "=== VIDEO BACKGROUND ===\n";
+		prompt += g_videoBackground + "\n\n";
 	}
 	
 	// === 内容类型指导 ===
@@ -682,12 +841,43 @@ string Translate(string Text, string &in SrcLang, string &in DstLang)
 	// 加载自定义提示词配置
 	g_customPrompt = HostLoadString("AI_Trans_CustomPrompt", "");
 	
+	// 加载视频背景开关
+	string savedVideoBg = HostLoadString("AI_Trans_VideoBgEnabled", "N");
+	g_videoBgEnabled = (savedVideoBg == "Y" || savedVideoBg == "y");
+	
 	// 检查配置
 	if (g_apiKey.length() == 0)
 	{
 		SrcLang = "UTF8";
 		DstLang = "UTF8";
 		return errorPrefix + "API Key is required";
+	}
+	
+	// ===== 检测视频切换，自动生成视频背景上下文 =====
+	if (g_videoBgEnabled)
+	{
+		string nowFileName = HostGetPlayingFileName();
+		if (nowFileName.length() > 0 && nowFileName != g_currentFileName)
+		{
+			// 新视频！清空翻译缓存，重新生成背景
+			g_currentFileName = nowFileName;
+			ClearHistory();
+			g_videoBackground = "";
+			g_videoBackgroundReady = false;
+			
+			HostPrintUTF8("[VideoContext] New video detected: " + nowFileName + "\n");
+			
+			g_videoBackground = GenerateVideoContext(nowFileName);
+			if (g_videoBackground.length() > 0)
+			{
+				g_videoBackgroundReady = true;
+				HostPrintUTF8("[VideoContext] Background ready for translations\n");
+			}
+			else
+			{
+				HostPrintUTF8("[VideoContext] Failed to generate background, continuing without it\n");
+			}
+		}
 	}
 	
 	// 检测是否有场景切换

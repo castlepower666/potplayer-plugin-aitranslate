@@ -77,16 +77,16 @@ string HostGetExecuteFolder()
 string HostGetExtension(const string &in fn)
 	Get file extension
 
-string HostMBCSToUTF8(const string &in str)
+string HostMBCSToUTF8(const string &in str, int CodePage = 0)
 	Convert multibyte to UTF8
 
-string HostMBCSToUTF16(const string &in str)
+string HostMBCSToUTF16(const string &in str, int CodePage = 0)
 	Convert multibyte to UTF16
 
-string HostUTF8ToMBCS(const string &in str)
+string HostUTF8ToMBCS(const string &in str, int CodePage = 0)
 	Convert UTF8 to multibyte
 
-string HostUTF16ToMBCS(const string &in str)
+string HostUTF16ToMBCS(const string &in str, int CodePage = 0)
 	Convert UTF16 to multibyte
 
 string HostUTF8ToUTF16(const string &in str)
@@ -296,10 +296,22 @@ void HostSetUrlUserAgentHTTP(const string &url, const string &userAgent)
 void HostSetUrlHeaderHTTP(const string &url, const string &header)
 	Set http header for HTTP url
 
+void HostSetUrlRefererHTTP(const string &url, const string &referer)
+	Set http referer for HTTP url
+
+void HostSetUrlCookieHTTP(const string &url, const string &cookie)
+	Set http cookie for HTTP url
+
 void HostMessageBox(const string& content, const string& title = "", int iconType = 3, int btnType = 1)
 	Show message box
 	iconType : 0->!, 1->?, 2->i, 3->x
 	btnType : 0->OK, 1->Close, 2->Yes
+
+string HostGetPlayingFileName()
+	Get current playing file name
+
+string HostGetPlayingTitle()
+	Get current playing title
 
 ------------------------PotPlayer's builtin class----------------------------------
 ------------------------string
